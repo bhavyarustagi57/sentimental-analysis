@@ -1,0 +1,25 @@
+# Exact clean environment used for the Models 1-2 real CPU smoke validation.
+# Install after creating a fresh Python 3.12.14 virtual environment.
+fastapi==0.141.1
+uvicorn[standard]==0.52.4
+groq==1.6.0
+pydantic==2.13.4
+python-dotenv==1.2.3
+httpx==0.28.1
+nltk==3.10.3
+python-multipart==0.0.32
+pandas==3.0.5
+openpyxl==3.1.5
+xlrd==2.0.2
+scikit-learn==1.9.0
+joblib==1.5.3
+numpy==2.5.3
+huggingface-hub==1.31.0
+pyarrow==25.0.1
+pytest==9.1.1
+torch==2.14.0
+transformers==5.17.0
+accelerate==1.15.0
+peft==0.20.0
+safetensors==0.8.0
+xformers==0.0.35

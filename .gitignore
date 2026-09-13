@@ -1,0 +1,49 @@
+# Logs
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+node_modules
+dist
+dist-ssr
+*.local
+.env
+.env.*
+!.env.example
+
+# Python and local runtime state
+__pycache__/
+*.py[cod]
+.venv/
+.venv-transformer-smoke/
+venv/
+runtime/
+Data.json
+memory.json
+Batches.json
+sample.json
+test_reviews.csv
+
+# Large raw source downloads are optional: the prepared datasets and frozen
+# model artifacts below are submission evidence and must remain packageable.
+datasets/raw/
+
+# Editor directories and files
+.vscode/*
+!.vscode/extensions.json
+.idea
+.DS_Store
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# Generated ML model artifacts/checkpoints
+models/
+
+.pytest_cache/

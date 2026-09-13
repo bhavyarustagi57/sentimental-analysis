@@ -1,0 +1,163 @@
+{
+  "schema_version": 1,
+  "prepared_at": "2026-08-21T07:41:59.527343+00:00",
+  "random_seed": 42,
+  "datasets": [
+    {
+      "id": "imdb",
+      "name": "IMDb Movie Reviews",
+      "task": "binary_sentiment",
+      "source": {
+        "url": "https://huggingface.co/datasets/stanfordnlp/imdb",
+        "origin_url": null,
+        "dataset_id": "stanfordnlp/imdb",
+        "revision": "e6281661ce1c48d982bc483cf8a173c1bbeb5d31",
+        "split": "train",
+        "documented_train_examples": 25000,
+        "original_label_mapping": {
+          "0": 0,
+          "1": 1
+        }
+      },
+      "processed_file": "processed\\imdb.csv",
+      "processed_columns": [
+        "text",
+        "label"
+      ],
+      "canonical_label_mapping": {
+        "0": "negative",
+        "1": "positive"
+      },
+      "rows": 10000,
+      "class_distribution": {
+        "0": 5000,
+        "1": 5000
+      },
+      "sampling_strategy": "deterministic source-shard traversal with a seeded final shuffle, capped at 5,000 examples per class",
+      "max_samples_per_dataset": 10000,
+      "random_seed": 42,
+      "source_rows_seen": 17509,
+      "null_or_empty_rows_removed": 0,
+      "invalid_label_rows_removed": 0,
+      "duplicate_rows_removed": 78,
+      "prepared_at": "2026-08-21T07:41:32.795821+00:00"
+    },
+    {
+      "id": "sentiment140",
+      "name": "Sentiment140",
+      "task": "binary_sentiment",
+      "source": {
+        "url": "https://huggingface.co/datasets/bdanko/sentiment140",
+        "origin_url": "https://cs.stanford.edu/people/alecmgo/trainingandtestdata.zip",
+        "dataset_id": "bdanko/sentiment140",
+        "revision": "c8aaf1333e9d0cf5886f4eb9506ad917f1d8931c",
+        "split": "train",
+        "documented_train_examples": 1600000,
+        "original_label_mapping": {
+          "0": 0,
+          "4": 1
+        }
+      },
+      "processed_file": "processed\\sentiment140.csv",
+      "processed_columns": [
+        "text",
+        "label"
+      ],
+      "canonical_label_mapping": {
+        "0": "negative",
+        "1": "positive"
+      },
+      "rows": 10000,
+      "class_distribution": {
+        "0": 5000,
+        "1": 5000
+      },
+      "sampling_strategy": "deterministic source-shard traversal with a seeded final shuffle, capped at 5,000 examples per class",
+      "max_samples_per_dataset": 10000,
+      "random_seed": 42,
+      "source_rows_seen": 805161,
+      "null_or_empty_rows_removed": 1586,
+      "invalid_label_rows_removed": 0,
+      "duplicate_rows_removed": 28271,
+      "prepared_at": "2026-08-21T07:41:53.967645+00:00"
+    },
+    {
+      "id": "amazon_polarity",
+      "name": "Amazon Polarity",
+      "task": "binary_sentiment",
+      "source": {
+        "url": "https://huggingface.co/datasets/fancyzhx/amazon_polarity",
+        "origin_url": null,
+        "dataset_id": "fancyzhx/amazon_polarity",
+        "revision": "9d9c45c18f8c3cf1b23a3c27917b60cbf28f3289",
+        "split": "train",
+        "documented_train_examples": 3600000,
+        "original_label_mapping": {
+          "0": 0,
+          "1": 1
+        }
+      },
+      "processed_file": "processed\\amazon_polarity.csv",
+      "processed_columns": [
+        "text",
+        "label"
+      ],
+      "canonical_label_mapping": {
+        "0": "negative",
+        "1": "positive"
+      },
+      "rows": 10000,
+      "class_distribution": {
+        "0": 5000,
+        "1": 5000
+      },
+      "sampling_strategy": "deterministic source-shard traversal with a seeded final shuffle, capped at 5,000 examples per class",
+      "max_samples_per_dataset": 10000,
+      "random_seed": 42,
+      "source_rows_seen": 10175,
+      "null_or_empty_rows_removed": 0,
+      "invalid_label_rows_removed": 0,
+      "duplicate_rows_removed": 3,
+      "prepared_at": "2026-08-21T07:41:56.023716+00:00"
+    },
+    {
+      "id": "yelp_polarity",
+      "name": "Yelp Polarity",
+      "task": "binary_sentiment",
+      "source": {
+        "url": "https://huggingface.co/datasets/fancyzhx/yelp_polarity",
+        "origin_url": null,
+        "dataset_id": "fancyzhx/yelp_polarity",
+        "revision": "bbf1c97a1f0cf005e5aded43839fd814654a1557",
+        "split": "train",
+        "documented_train_examples": 560000,
+        "original_label_mapping": {
+          "0": 0,
+          "1": 1
+        }
+      },
+      "processed_file": "processed\\yelp_polarity.csv",
+      "processed_columns": [
+        "text",
+        "label"
+      ],
+      "canonical_label_mapping": {
+        "0": "negative",
+        "1": "positive"
+      },
+      "rows": 10000,
+      "class_distribution": {
+        "0": 5000,
+        "1": 5000
+      },
+      "sampling_strategy": "deterministic source-shard traversal with a seeded final shuffle, capped at 5,000 examples per class",
+      "max_samples_per_dataset": 10000,
+      "random_seed": 42,
+      "source_rows_seen": 10604,
+      "null_or_empty_rows_removed": 2,
+      "invalid_label_rows_removed": 0,
+      "duplicate_rows_removed": 2,
+      "prepared_at": "2026-08-21T07:41:59.513929+00:00"
+    }
+  ]
+}

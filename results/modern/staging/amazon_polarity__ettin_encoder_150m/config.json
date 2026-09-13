@@ -1,0 +1,37 @@
+{
+  "schema_version": 1,
+  "run_id": "amazon_polarity__ettin_encoder_150m",
+  "dataset": "amazon_polarity",
+  "dataset_display_name": "Amazon Polarity",
+  "model": "ettin_encoder_150m",
+  "model_display_name": "Ettin Encoder 150M",
+  "model_id": "jhu-clsp/ettin-encoder-150m",
+  "model_revision": "45d08642849e5c5701b162671ac811b7654bfd9f",
+  "tokenizer_revision": "45d08642849e5c5701b162671ac811b7654bfd9f",
+  "split_manifest_hash": "b61e93bdffba041e6d9cbb6ed9d8adb5eba067d4220d092b8aaefe944309fde4",
+  "seed": 42,
+  "labels": {
+    "0": "negative",
+    "1": "positive"
+  },
+  "max_sequence_length": 256,
+  "dynamic_padding": true,
+  "maximum_epochs": 3,
+  "optimizer": "AdamW",
+  "lr_scheduler": "linear",
+  "warmup_ratio": 0.1,
+  "early_stopping_patience": 1,
+  "checkpoint_ranking": [
+    "weighted_f1_desc",
+    "accuracy_desc",
+    "loss_asc"
+  ],
+  "adaptation_mode": "full_fine_tuning",
+  "preferred_physical_batch_size": 16,
+  "target_effective_batch_size": 32,
+  "gradient_accumulation_steps": 2,
+  "lora": null,
+  "metric_average": "weighted",
+  "zero_division": 0,
+  "test_examples": 2000
+}

@@ -1,0 +1,37 @@
+{
+  "schema_version": 1,
+  "run_id": "sentiment140__mmbert_small",
+  "dataset": "sentiment140",
+  "dataset_display_name": "Sentiment140",
+  "model": "mmbert_small",
+  "model_display_name": "mmBERT Small",
+  "model_id": "jhu-clsp/mmBERT-small",
+  "model_revision": "abc32620dd4f6ab06f5fbe905dc25f310618e09f",
+  "tokenizer_revision": "abc32620dd4f6ab06f5fbe905dc25f310618e09f",
+  "split_manifest_hash": "6e9002d616e8478cb5d4d7e2530dfb3fa09f0d607a760dd8342f7f46f7346e35",
+  "seed": 42,
+  "labels": {
+    "0": "negative",
+    "1": "positive"
+  },
+  "max_sequence_length": 256,
+  "dynamic_padding": true,
+  "maximum_epochs": 3,
+  "optimizer": "AdamW",
+  "lr_scheduler": "linear",
+  "warmup_ratio": 0.1,
+  "early_stopping_patience": 1,
+  "checkpoint_ranking": [
+    "weighted_f1_desc",
+    "accuracy_desc",
+    "loss_asc"
+  ],
+  "adaptation_mode": "full_fine_tuning",
+  "preferred_physical_batch_size": 16,
+  "target_effective_batch_size": 32,
+  "gradient_accumulation_steps": 2,
+  "lora": null,
+  "metric_average": "weighted",
+  "zero_division": 0,
+  "test_examples": 2000
+}

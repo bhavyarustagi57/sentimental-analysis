@@ -1,0 +1,48 @@
+{
+  "schema_version": 1,
+  "run_id": "imdb__qwen3_0_6b",
+  "dataset": "imdb",
+  "dataset_display_name": "IMDb Movie Reviews",
+  "model": "qwen3_0_6b",
+  "model_display_name": "Qwen3 0.6B Base",
+  "model_id": "Qwen/Qwen3-0.6B-Base",
+  "model_revision": "da87bfb608c14b7cf20ba1ce41287e8de496c0cd",
+  "tokenizer_revision": "da87bfb608c14b7cf20ba1ce41287e8de496c0cd",
+  "split_manifest_hash": "fba6491bca30fa9dcf2a8c48a9d945b3d7042f98f5d61e3415e24664022cb327",
+  "seed": 42,
+  "labels": {
+    "0": "negative",
+    "1": "positive"
+  },
+  "max_sequence_length": 256,
+  "dynamic_padding": true,
+  "maximum_epochs": 3,
+  "optimizer": "AdamW",
+  "lr_scheduler": "linear",
+  "warmup_ratio": 0.1,
+  "early_stopping_patience": 1,
+  "checkpoint_ranking": [
+    "weighted_f1_desc",
+    "accuracy_desc",
+    "loss_asc"
+  ],
+  "adaptation_mode": "lora",
+  "preferred_physical_batch_size": 4,
+  "target_effective_batch_size": 32,
+  "gradient_accumulation_steps": 8,
+  "lora": {
+    "rank": 4,
+    "alpha": 8,
+    "dropout": 0.05,
+    "target_modules": [
+      "q_proj",
+      "v_proj"
+    ],
+    "modules_to_save": [
+      "score"
+    ]
+  },
+  "metric_average": "weighted",
+  "zero_division": 0,
+  "test_examples": 2000
+}
