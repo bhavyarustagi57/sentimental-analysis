@@ -155,7 +155,7 @@ class HuggingFaceModelAdapter(ModelAdapter):
         batch = {key: value.to(self.hardware.device_type) for key, value in padded.items()}
         model.eval()
         with torch.inference_mode():
-            return model(**batch).logits.detach().cpu().numpy()
+            return model(**batch).logits.detach().to(dtype=torch.float32).cpu().numpy()
 
     def save_checkpoint(self, path: Path) -> None:
         if self.model is None:

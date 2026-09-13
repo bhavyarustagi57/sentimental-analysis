@@ -31,7 +31,7 @@ from ml.training import (
     run_with_oom_recovery,
     trainer_resume_arguments,
 )
-from ml.transformer_adapter import ModelAdapter
+from ml.transformer_adapter import HuggingFaceModelAdapter, ModelAdapter
 from ml.transformer_artifacts import (
     TransformerArtifactMetadata,
     read_transformer_metadata,
@@ -274,6 +274,32 @@ def test_adapter_contract_and_inference_compatibility_response() -> None:
         "<b>GREAT product!!!</b>", dataset="imdb",
     )
     assert response == {"label": 1, "sentiment": "positive", "dataset": "imdb", "model": "fixture_model"}
+
+
+def test_huggingface_adapter_predict_converts_bfloat16_logits_to_float32_numpy() -> None:
+    import torch
+
+    class BFloatTokenizer(_FakeTokenizer):
+        def pad(self, encodings: Mapping[str, Any], **_: Any) -> Mapping[str, Any]:
+            return {
+                "input_ids": torch.tensor(encodings["input_ids"], dtype=torch.long),
+                "attention_mask": torch.tensor(encodings["attention_mask"], dtype=torch.long),
+            }
+
+    class BFloatModel:
+        def eval(self) -> None:
+            return None
+
+        def __call__(self, **_: Any) -> Any:
+            return SimpleNamespace(logits=torch.tensor([[1.25, -0.5]], dtype=torch.bfloat16))
+
+    adapter = HuggingFaceModelAdapter(
+        get_model_config("eurobert_210m"), tokenizer=BFloatTokenizer(), model=BFloatModel(),
+    )
+    logits = adapter.predict(["example"])
+    assert isinstance(logits, np.ndarray)
+    assert logits.dtype == np.float32
+    np.testing.assert_array_equal(logits, np.array([[1.25, -0.5]], dtype=np.float32))
 
 
 def test_model_registry_encoder_decoder_contract() -> None:
