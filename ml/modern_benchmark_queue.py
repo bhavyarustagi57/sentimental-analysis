@@ -397,9 +397,15 @@ def validate_completed_result(
     if set(truncation) != {"train", "validation", "test"} or not all(0 <= float(value) <= 1 for value in truncation.values()):
         raise ValueError("Completed truncation rates are invalid.")
     hardware = result["hardware"]
-    for field in ("python", "torch", "transformers", "accelerate", "peft", "safetensors", "device", "precision"):
+    for field in ("python", "torch", "transformers", "accelerate", "peft", "safetensors", "device_type", "precision"):
         if not hardware.get(field):
             raise ValueError(f"Completed hardware/dependency metadata is missing {field}.")
+    if (
+        hardware["device_type"] != result["device"]
+        or hardware.get("device_name") != result["device_name"]
+        or hardware["precision"] != result["numeric_precision"]
+    ):
+        raise ValueError("Nested and top-level hardware metadata are inconsistent.")
     checkpoint = Path(str(result["checkpoint_identifier"]))
     if not checkpoint.is_dir() or not any(checkpoint.glob("*.safetensors")):
         raise ValueError("Validation-selected safetensors checkpoint is missing.")
@@ -439,8 +445,9 @@ def rebuild_canonical_results(results_root: Path = MODERN_RESULTS_ROOT) -> list[
 def promote_staged_result(dataset: str, model: str, results_root: Path = MODERN_RESULTS_ROOT) -> dict[str, Any]:
     paths = run_paths(dataset, model, results_root)
     current_state = read_json(paths.state)
-    if RunStatus(current_state["status"]) is not RunStatus.RUNNING:
-        raise ValueError("Only a RUNNING experiment can be promoted.")
+    current_status = RunStatus(current_state["status"])
+    if current_status not in {RunStatus.RUNNING, RunStatus.FAILED}:
+        raise ValueError("Only a RUNNING or fully staged FAILED experiment can be promoted.")
     if int(current_state.get("test_evaluation_attempts", 0)) != 1:
         raise ValueError("Canonical promotion requires exactly one final test evaluation attempt.")
     result = read_json(paths.result)
@@ -451,6 +458,8 @@ def promote_staged_result(dataset: str, model: str, results_root: Path = MODERN_
             "best_checkpoint": result["checkpoint_identifier"],
             "current_epoch": result["final_epoch"],
             "current_step": result["final_step"],
+            "failure": None,
+            "recovered_failure": current_state.get("failure") if current_status is RunStatus.FAILED else None,
         },
         results_root=results_root,
     )

@@ -105,7 +105,7 @@ def _valid_result(tmp_path: Path, dataset: str, model: str) -> dict[str, object]
         "training_configuration": {"effective_batch_size": 32}, "oom_adjustments": [],
         "hardware": {"python": "3.12", "torch": "fixture", "transformers": "fixture",
                      "accelerate": "fixture", "peft": "fixture", "safetensors": "fixture",
-                     "device": "cuda", "precision": "fp16"},
+                     "device_type": "cuda", "device_name": "Fixture GPU", "precision": "fp16"},
         "training_timing_definition": "fixture", "inference_timing_definition": "fixture",
         "completed_at": "2026-01-01T00:00:00+00:00",
     }
@@ -131,6 +131,28 @@ def test_validated_promotion_atomically_builds_separate_modern_results(tmp_path:
     assert audit["completed"] == 1
     assert audit["pending"] == 23
     assert audit["phase_4_pass"] is False
+
+
+def test_completed_evidence_can_be_promoted_from_failed_state_without_evaluation(tmp_path: Path) -> None:
+    initialize_queue(tmp_path)
+    dataset, model = "imdb", "eurobert_210m"
+    paths = run_paths(dataset, model, tmp_path)
+    result = _valid_result(tmp_path, dataset, model)
+    atomic_json(paths.result, result)
+    transition_run(dataset, model, RunStatus.RUNNING, updates={"test_evaluation_attempts": 1}, results_root=tmp_path)
+    original_failure = {"classification": "model_runtime_defect", "message": "post-test schema validation"}
+    transition_run(
+        dataset, model, RunStatus.FAILED,
+        updates={"failure": original_failure}, results_root=tmp_path,
+    )
+
+    promoted = promote_staged_result(dataset, model, tmp_path)
+
+    assert promoted["status"] == "COMPLETED"
+    assert promoted["test_evaluation_attempts"] == 1
+    assert promoted["failure"] is None
+    assert promoted["recovered_failure"] == original_failure
+    assert read_json(tmp_path / "results.json") == [result]
 
 
 def test_promotion_rejects_bad_prediction_count_and_hash(tmp_path: Path) -> None:
