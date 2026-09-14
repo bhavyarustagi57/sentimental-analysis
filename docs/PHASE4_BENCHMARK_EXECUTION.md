@@ -12,6 +12,7 @@ The local machine used to prepare this package has no CUDA device. Its queue is 
 - `ml/modern_benchmark_queue.py`: immutable run configurations, atomic queue state, validation, and canonical promotion.
 - `ml/modern_benchmark_analysis.py`: summaries and frontend-ready data, enabled only when all 24 runs pass.
 - `scripts/run_phase4_free_gpu.py`: bounded free-GPU session runner.
+- `scripts/phase4_colab_orchestrator.py`: complete bootstrap, recovery, dependency, retry, and bounded execution loop.
 - `scripts/sync_phase4.py`: GitHub lightweight-state and private Hub checkpoint synchronization.
 - `notebooks/phase4_free_colab.ipynb`: Colab entry point.
 - `results/modern/staging/<dataset>__<model>/`: isolated configuration, state, checkpoints, predictions, and result.
@@ -62,6 +63,15 @@ Training time is synchronized GPU compute from the first optimization batch thro
    ```
 
 If the Git push fails after Hub upload, run `python scripts/sync_phase4.py push-lightweight` before resetting the runtime. The selected checkpoint is already durable on the Hub, but the Git push is what preserves canonical queue/result state.
+
+The preferred automated entry point replaces the manual runner/recovery commands:
+
+```text
+python scripts/phase4_colab_orchestrator.py --max-runs 1
+python scripts/phase4_colab_orchestrator.py --max-runs 3
+```
+
+It validates CUDA, secrets, Git identity/authentication, the private Hub repository, and official Gemma access; fast-forward pulls `main`; discovers completed evidence on the Hub even when Git state is stale; restores and validates completed runs; installs only the locked `xformers==0.0.35` with `--no-deps` when NeoBERT needs it; revalidates the unchanged PyTorch version and CUDA device; conservatively normalizes known pre-test environment failures; and runs the requested bounded number sequentially. Unknown, validation, corruption, and post-test failures stop with `ENGINEERING REVIEW REQUIRED`.
 
 ## Kaggle free GPU
 
