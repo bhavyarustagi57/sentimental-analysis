@@ -13,6 +13,8 @@ from .modern_benchmark_queue import (
     MODERN_RESULTS_ROOT,
     RunStatus,
     atomic_json,
+    initialize_queue,
+    locked_run_config,
     read_json,
     rebuild_canonical_results,
     refresh_queue,
@@ -143,9 +145,10 @@ def restore_checkpoint(
     api_factory: Callable[..., Any] | None = None,
     download_function: Callable[..., str] | None = None,
 ) -> dict[str, Any]:
-    """Restore selected checkpoint/tokenizer/config without restoring optimizer state."""
+    """Atomically reconstruct and validate one completed run from Hub evidence."""
     repo_id, token = _credentials(environment)
     prefix = checkpoint_repo_path(dataset, model)
+    initialize_queue(results_root)
     if api_factory is None or download_function is None:
         from huggingface_hub import HfApi, hf_hub_download
 
@@ -156,33 +159,102 @@ def restore_checkpoint(
         name for name in api.list_repo_files(repo_id, repo_type="model", token=token)
         if name.startswith(prefix + "/")
     ]
-    restorable = [
-        name for name in remote_files
-        if any(name.startswith(f"{prefix}/{part}/") for part in ("checkpoints/best/model", "tokenizer", "config"))
-    ]
-    if not restorable or not any(name.endswith(".safetensors") for name in restorable):
-        raise FileNotFoundError(f"No verified selected checkpoint exists at {repo_id}/{prefix}.")
-    root = run_paths(dataset, model, results_root).root
+    root_files = {"config.json", "state.json", "result.json", "predictions.jsonl",
+                  "training_history.json", "persistence_manifest.json"}
+    restorable = [name for name in remote_files if (
+        PurePosixPath(name).relative_to(PurePosixPath(prefix)).as_posix() in root_files
+        or any(name.startswith(f"{prefix}/{part}/") for part in ("checkpoints/best/model", "tokenizer", "config"))
+    )]
+    relative_names = {
+        PurePosixPath(name).relative_to(PurePosixPath(prefix)).as_posix() for name in restorable
+    }
+    missing_metadata = sorted(root_files - relative_names)
+    if missing_metadata:
+        raise FileNotFoundError(f"Persisted completed run is missing required files: {missing_metadata}")
+    if not any(name.endswith(".safetensors") for name in restorable):
+        raise FileNotFoundError(f"No selected safetensors checkpoint exists at {repo_id}/{prefix}.")
+    if not any(name.startswith(f"{prefix}/tokenizer/") for name in restorable):
+        raise FileNotFoundError("Persisted completed run has no tokenizer files.")
+    if f"{prefix}/config/config.json" not in restorable:
+        raise FileNotFoundError("Persisted completed run has no saved model config.")
+    paths = run_paths(dataset, model, results_root)
+    temporary = paths.root.parent / f".{paths.root.name}.restore-incomplete"
+    backup = paths.root.parent / f".{paths.root.name}.restore-previous"
+    if temporary.exists():
+        shutil.rmtree(temporary)
+    temporary.mkdir(parents=True)
     for remote_name in restorable:
         downloaded = Path(download_function(
             repo_id=repo_id, filename=remote_name, repo_type="model", token=token,
         ))
         relative = PurePosixPath(remote_name).relative_to(PurePosixPath(prefix))
-        destination = root.joinpath(*relative.parts)
+        destination = temporary.joinpath(*relative.parts)
         destination.parent.mkdir(parents=True, exist_ok=True)
         shutil.copy2(downloaded, destination)
-    paths = run_paths(dataset, model, results_root)
+    expected_config = locked_run_config(dataset, model)
+    restored_config = read_json(temporary / "config.json")
+    if restored_config != expected_config:
+        raise ValueError("Persisted run configuration differs from the locked model/split configuration.")
+    state = dict(read_json(temporary / "state.json"))
+    result = dict(read_json(temporary / "result.json"))
+    manifest = dict(read_json(temporary / "persistence_manifest.json"))
+    expected_id = run_id(dataset, model)
+    if state.get("run_id") != expected_id or state.get("dataset") != dataset or state.get("model") != model:
+        raise ValueError("Persisted state identity does not match the requested run.")
+    if result.get("dataset") != dataset or result.get("model") != model or result.get("status") != RunStatus.COMPLETED.value:
+        raise ValueError("Persisted result identity/status does not match the requested completed run.")
+    if RunStatus(state.get("status")) not in {RunStatus.RUNNING, RunStatus.FAILED, RunStatus.COMPLETED}:
+        raise ValueError("Persisted state is not a completed or post-evaluation recoverable state.")
+    if int(state.get("test_evaluation_attempts", 0)) != 1:
+        raise ValueError("Completed-run restore requires exactly one final-test attempt.")
+    if manifest.get("verified") is not True or manifest.get("repo_id") != repo_id or manifest.get("path_in_repo") != prefix:
+        raise ValueError("Persisted checkpoint manifest is inconsistent with the requested Hub location.")
+    result["checkpoint_persistence"] = manifest
+    temporary_checkpoint = temporary / "checkpoints" / "best" / "model"
+    result["checkpoint_identifier"] = str(temporary_checkpoint)
+    atomic_json(temporary / "result.json", result)
+    from .modern_benchmark_queue import validate_completed_result
+
+    validate_completed_result(result, temporary / "predictions.jsonl", expected_config=expected_config)
+    if read_json(temporary / "training_history.json") != result["training_history"]:
+        raise ValueError("Persisted training history differs from completed result metadata.")
     restored_checkpoint = paths.checkpoints / "best" / "model"
-    state = dict(read_json(paths.state))
-    state["best_checkpoint"] = str(restored_checkpoint)
-    atomic_json(paths.state, state)
-    if paths.result.is_file():
-        result = dict(read_json(paths.result))
-        result["checkpoint_identifier"] = str(restored_checkpoint)
-        atomic_json(paths.result, result)
-    refresh_queue(results_root)
-    if RunStatus(state["status"]) is RunStatus.COMPLETED and paths.result.is_file():
-        rebuild_canonical_results(results_root)
+    result["checkpoint_identifier"] = str(restored_checkpoint)
+    recovered_failure = state.get("failure") if RunStatus(state["status"]) is RunStatus.FAILED else state.get("recovered_failure")
+    state.update({
+        "status": RunStatus.COMPLETED.value,
+        "best_checkpoint": str(restored_checkpoint),
+        "last_checkpoint": None,
+        "current_epoch": result["final_epoch"],
+        "current_step": result["final_step"],
+        "failure": None,
+        "recovered_failure": recovered_failure,
+        "completed_at": result["completed_at"],
+    })
+    atomic_json(temporary / "result.json", result)
+    atomic_json(temporary / "state.json", state)
+    if backup.exists():
+        shutil.rmtree(backup)
+    paths.root.rename(backup)
+    temporary.rename(paths.root)
+    try:
+        queue = refresh_queue(results_root)
+        completed_states = [item for item in queue["runs"] if item["status"] == RunStatus.COMPLETED.value]
+        all_completed_evidence_local = all(
+            run_paths(item["dataset"], item["model"], results_root).result.is_file()
+            and run_paths(item["dataset"], item["model"], results_root).predictions.is_file()
+            and (run_paths(item["dataset"], item["model"], results_root).checkpoints / "best" / "model").is_dir()
+            for item in completed_states
+        )
+        if all_completed_evidence_local:
+            rebuild_canonical_results(results_root)
+    except BaseException:
+        if paths.root.exists():
+            shutil.rmtree(paths.root)
+        backup.rename(paths.root)
+        refresh_queue(results_root)
+        raise
+    shutil.rmtree(backup)
     return {"repo_id": repo_id, "path_in_repo": prefix, "restored_files": len(restorable), "verified": True}
 
 
@@ -208,6 +280,7 @@ def sync_lightweight_to_github(
 ) -> bool:
     """Commit and push only allowlisted lightweight evidence using existing Git credentials."""
     project = Path(project_root).resolve()
+    validate_git_identity(project, runner=runner)
     files = lightweight_files(project, results_root)
     if not files:
         raise FileNotFoundError("No lightweight Phase 4 evidence exists to sync.")
@@ -226,3 +299,24 @@ def restore_lightweight_from_github(
 ) -> None:
     """Fast-forward the Git checkout using its preconfigured credential helper."""
     runner(["git", "pull", "--ff-only"], cwd=Path(project_root).resolve(), check=True)
+
+
+def validate_git_identity(
+    project_root: Path, *, runner: Callable[..., Any] = subprocess.run,
+) -> dict[str, str]:
+    """Fail before GPU work when a fresh runtime cannot create persistence commits."""
+    project = Path(project_root).resolve()
+    identity: dict[str, str] = {}
+    for key in ("user.name", "user.email"):
+        completed = runner(
+            ["git", "config", "--get", key], cwd=project, check=False,
+            capture_output=True, text=True,
+        )
+        value = str(getattr(completed, "stdout", "")).strip()
+        if completed.returncode != 0 or not value:
+            raise RuntimeError(
+                f"Git {key} is not configured. Before GPU work run: "
+                f"git config {key} \"YOUR VALUE\" (use your own non-secret identity)."
+            )
+        identity[key] = value
+    return identity

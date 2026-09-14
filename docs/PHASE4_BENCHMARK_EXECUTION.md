@@ -36,7 +36,7 @@ Training time is synchronized GPU compute from the first optimization batch thro
 
 ## Google Colab Free
 
-1. Store source and lightweight benchmark evidence in the GitHub repository. Add Colab secrets named `GH_TOKEN`, `PHASE4_GITHUB_REPO` (`owner/repository`), `HF_TOKEN`, and `PHASE4_HF_REPO` (`owner/private-model-repository`). Grant the minimum GitHub repository permission needed to push and Hugging Face write permission to that one private model repository.
+1. Store source and lightweight benchmark evidence in the GitHub repository. Add Colab secrets named `GH_TOKEN`, `PHASE4_GITHUB_REPO` (`owner/repository`), `PHASE4_GIT_NAME`, `PHASE4_GIT_EMAIL`, `HF_TOKEN`, and `PHASE4_HF_REPO` (`owner/private-model-repository`). Git name/email are identity strings, not credentials. Grant the minimum GitHub repository permission needed to push and Hugging Face write permission to that one private model repository.
 2. Open `notebooks/phase4_free_colab.ipynb` and choose **Runtime > Change runtime type > T4 GPU** (or another available free GPU). The notebook clones a fresh checkout under `/content`; `results/modern` is restored by that clone.
 3. The notebook configures Git authentication from the process environment. Tokens are never inserted into a URL, source file, result, log, or committed Git configuration.
 4. Run the CUDA check. If no accelerator is assigned, stop and leave the run `BLOCKED — GPU UNAVAILABLE`; never buy or select paid compute for this benchmark.
@@ -83,7 +83,7 @@ Large optimizer-bearing resume checkpoints are intentionally not uploaded becaus
 
 The session runner resumes a `RUNNING` run before selecting a `PENDING` run. Failed or blocked states remain visible and are never silently skipped as completed. Diagnose the recorded failure before changing state. OOM recovery halves the physical batch and raises accumulation to retain effective batch 32; it does not change splits, sequence length, epochs, or metrics.
 
-The final test-attempt counter prevents an accidental second canonical test evaluation. Use `--allow-test-rerun` only after documenting a proven technical invalidation. Revision, split-hash, checkpoint, prediction-count, prediction-hash, finite-value, and binary-label checks run before promotion.
+The final test-attempt counter prevents an accidental second canonical test evaluation. Use `--allow-test-rerun` only after documenting a proven technical invalidation. Revision, split-hash, checkpoint, prediction-count, prediction-hash, finite-value, and binary-label checks run before promotion. `restore-checkpoint` is a full completed-run restore: it downloads result, predictions, history, persistence manifest, state, tokenizer/config, and best checkpoint into a temporary directory; validates everything; repairs only ephemeral checkpoint paths; atomically installs the run; and refreshes the queue/canonical output without invoking training or evaluation.
 
 Useful commands:
 

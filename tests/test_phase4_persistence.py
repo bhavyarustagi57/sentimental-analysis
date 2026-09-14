@@ -1,17 +1,27 @@
 from __future__ import annotations
 
 import json
-from pathlib import Path
+from pathlib import Path, PurePosixPath
 from types import SimpleNamespace
 from typing import Any
 
-from ml.modern_benchmark_queue import atomic_json, initialize_queue, read_json, run_paths
+import pytest
+
+from ml.modern_benchmark_queue import (
+    atomic_json,
+    initialize_queue,
+    matrix_audit,
+    prediction_sha256,
+    read_json,
+    run_paths,
+)
 from ml.phase4_persistence import (
     checkpoint_repo_path,
     lightweight_files,
     persist_completed_checkpoint,
     restore_checkpoint,
     restore_lightweight_from_github,
+    validate_git_identity,
 )
 
 
@@ -56,7 +66,51 @@ def _completed_fixture(root: Path) -> tuple[Any, FakeHub]:
     (paths.root / "tokenizer" / "tokenizer.json").write_text("{}", encoding="utf-8")
     (paths.root / "config").mkdir()
     (paths.root / "config" / "config.json").write_text("{}", encoding="utf-8")
-    atomic_json(paths.result, {"status": "COMPLETED"})
+    lines = [
+        json.dumps({"row_id": f"row-{index}", "label": index % 2, "prediction": index % 2,
+                    "logits": [1.0, 0.0] if index % 2 == 0 else [0.0, 1.0]})
+        for index in range(2_000)
+    ]
+    paths.predictions.write_text("\n".join(lines) + "\n", encoding="utf-8")
+    history = [{"epoch": 3, "global_step": 675}]
+    atomic_json(paths.history, history)
+    config = read_json(paths.config)
+    persistence = {"repo_id": ENVIRONMENT["PHASE4_HF_REPO"], "repo_type": "model",
+                   "path_in_repo": checkpoint_repo_path("imdb", "eurobert_210m"),
+                   "commit": "fake-commit", "verified": True, "verified_file_count": 10,
+                   "persisted_at": "2026-01-01T00:00:00+00:00"}
+    atomic_json(paths.root / "persistence_manifest.json", persistence)
+    stale = "/content/old-runtime/results/modern/staging/imdb__eurobert_210m/checkpoints/best/model"
+    result = {
+        "schema_version": 1, "dataset": "imdb", "model": "eurobert_210m", "status": "COMPLETED",
+        "accuracy": 1.0, "precision": 1.0, "recall": 1.0, "f1_score": 1.0,
+        "validation_f1": 0.9, "validation_accuracy": 0.9, "validation_loss": 0.2,
+        "training_time_seconds": 10.0, "inference_time_seconds": 2.0,
+        "examples_per_second": 1_000.0, "trainable_parameters": 10, "total_parameters": 100,
+        "adaptation_mode": config["adaptation_mode"], "final_epoch": 3, "final_step": 675,
+        "device": "cuda", "device_name": "Tesla T4", "numeric_precision": "bf16",
+        "checkpoint_identifier": stale, "model_id": config["model_id"],
+        "model_revision": config["model_revision"], "tokenizer_revision": config["tokenizer_revision"],
+        "split_manifest_hash": config["split_manifest_hash"], "prediction_count": 2_000,
+        "prediction_sha256": prediction_sha256(paths.predictions), "dataset_fingerprint": "fixture",
+        "preprocessing_version": "1.0", "seed": 42,
+        "labels": {"0": "negative", "1": "positive"}, "max_sequence_length": 256,
+        "truncation_rate": {"train": 0.0, "validation": 0.0, "test": 0.0},
+        "checkpoint_reload_verified": True, "training_history": history,
+        "training_configuration": {"effective_batch_size": 32}, "oom_adjustments": [],
+        "hardware": {"python": "3.12", "torch": "fixture", "transformers": "fixture",
+                     "accelerate": "fixture", "peft": "fixture", "safetensors": "fixture",
+                     "device_type": "cuda", "device_name": "Tesla T4", "precision": "bf16"},
+        "training_timing_definition": "fixture", "inference_timing_definition": "fixture",
+        "checkpoint_persistence": persistence, "completed_at": "2026-01-01T00:00:00+00:00",
+    }
+    atomic_json(paths.result, result)
+    state = dict(read_json(paths.state))
+    state.update({"status": "COMPLETED", "test_evaluation_attempts": 1,
+                  "best_checkpoint": stale, "last_checkpoint": stale,
+                  "current_epoch": 3, "current_step": 675,
+                  "completed_at": result["completed_at"]})
+    atomic_json(paths.state, state)
     hub = FakeHub(token=TOKEN)
     return paths, hub
 
@@ -84,34 +138,95 @@ def test_checkpoint_upload_path_is_stable_and_run_specific() -> None:
     assert checkpoint_repo_path("yelp_polarity", "qwen3_0_6b") == "phase4/yelp_polarity__qwen3_0_6b"
 
 
-def test_restore_downloads_only_selected_checkpoint_tokenizer_and_config(tmp_path: Path) -> None:
-    initialize_queue(tmp_path / "results")
-    hub = FakeHub(token=TOKEN)
+def _hub_from_completed_source(source: Path) -> tuple[FakeHub, Any]:
+    paths, hub = _completed_fixture(source)
     prefix = checkpoint_repo_path("imdb", "eurobert_210m")
-    hub.files = {
-        f"{prefix}/checkpoints/best/model/model.safetensors",
-        f"{prefix}/tokenizer/tokenizer.json",
-        f"{prefix}/config/config.json",
-        f"{prefix}/result.json",
-    }
-    cache = tmp_path / "cache"
+    for path in paths.root.rglob("*"):
+        if path.is_file() and "checkpoint-step" not in path.as_posix():
+            hub.files.add(f"{prefix}/{path.relative_to(paths.root).as_posix()}")
 
     def download(*, filename: str, **_: Any) -> str:
-        path = cache / filename
-        path.parent.mkdir(parents=True, exist_ok=True)
-        path.write_text(filename, encoding="utf-8")
-        return str(path)
+        relative = PurePosixPath(filename).relative_to(PurePosixPath(prefix))
+        return str(paths.root.joinpath(*relative.parts))
+
+    return hub, download
+
+
+def test_full_completed_run_restore_repairs_paths_and_rebuilds_queue_and_canonical(tmp_path: Path, monkeypatch: Any) -> None:
+    source = tmp_path / "source"
+    destination = tmp_path / "destination"
+    hub, download = _hub_from_completed_source(source)
+    monkeypatch.setattr("ml.modern_benchmark.execute_final_run", lambda *_args, **_kwargs: (_ for _ in ()).throw(AssertionError("training called")))
 
     restored = restore_checkpoint(
-        "imdb", "eurobert_210m", results_root=tmp_path / "results",
+        "imdb", "eurobert_210m", results_root=destination,
         environment=ENVIRONMENT, api_factory=lambda **_: hub, download_function=download,
     )
-    paths = run_paths("imdb", "eurobert_210m", tmp_path / "results")
-    assert restored["verified"] is True and restored["restored_files"] == 3
+    paths = run_paths("imdb", "eurobert_210m", destination)
+    assert restored["verified"] is True
     assert (paths.checkpoints / "best" / "model" / "model.safetensors").is_file()
     assert (paths.root / "tokenizer" / "tokenizer.json").is_file()
-    assert not paths.result.exists()
-    assert read_json(paths.state)["best_checkpoint"] == str(paths.checkpoints / "best" / "model")
+    assert paths.predictions.is_file() and paths.result.is_file() and paths.history.is_file()
+    assert (paths.root / "persistence_manifest.json").is_file()
+    state, result = read_json(paths.state), read_json(paths.result)
+    assert state["status"] == "COMPLETED" and state["test_evaluation_attempts"] == 1
+    assert state["best_checkpoint"] == result["checkpoint_identifier"] == str(paths.checkpoints / "best" / "model")
+    audit = matrix_audit(destination)
+    assert audit["completed"] == 1 and audit["pending"] == 23
+    assert len(read_json(destination / "results.json")) == 1
+
+
+@pytest.mark.parametrize("missing", ["predictions.jsonl", "result.json"])
+def test_full_restore_rejects_missing_required_evidence_without_changing_queue(tmp_path: Path, missing: str) -> None:
+    source, destination = tmp_path / "source", tmp_path / "destination"
+    hub, download = _hub_from_completed_source(source)
+    prefix = checkpoint_repo_path("imdb", "eurobert_210m")
+    hub.files.remove(f"{prefix}/{missing}")
+    with pytest.raises(FileNotFoundError, match="missing required files"):
+        restore_checkpoint("imdb", "eurobert_210m", results_root=destination,
+                           environment=ENVIRONMENT, api_factory=lambda **_: hub, download_function=download)
+    assert matrix_audit(destination)["completed"] == 0
+
+
+def test_full_restore_rejects_corrupted_prediction_hash_without_marking_completed(tmp_path: Path) -> None:
+    source, destination = tmp_path / "source", tmp_path / "destination"
+    hub, download = _hub_from_completed_source(source)
+    source_result = run_paths("imdb", "eurobert_210m", source).result
+    result = dict(read_json(source_result))
+    result["prediction_sha256"] = "0" * 64
+    atomic_json(source_result, result)
+    with pytest.raises(ValueError, match="hash"):
+        restore_checkpoint("imdb", "eurobert_210m", results_root=destination,
+                           environment=ENVIRONMENT, api_factory=lambda **_: hub, download_function=download)
+    assert matrix_audit(destination)["completed"] == 0
+
+
+def test_full_restore_rejects_duplicate_final_test_attempt(tmp_path: Path) -> None:
+    source, destination = tmp_path / "source", tmp_path / "destination"
+    hub, download = _hub_from_completed_source(source)
+    source_state = run_paths("imdb", "eurobert_210m", source).state
+    state = dict(read_json(source_state))
+    state["test_evaluation_attempts"] = 2
+    atomic_json(source_state, state)
+    with pytest.raises(ValueError, match="exactly one final-test attempt"):
+        restore_checkpoint("imdb", "eurobert_210m", results_root=destination,
+                           environment=ENVIRONMENT, api_factory=lambda **_: hub, download_function=download)
+    assert matrix_audit(destination)["completed"] == 0
+
+
+def test_git_identity_preflight_accepts_configured_identity_and_rejects_missing(tmp_path: Path) -> None:
+    values = {"user.name": "Academic Runner", "user.email": "runner@example.invalid"}
+
+    def configured(command: list[str], **_: Any) -> Any:
+        return SimpleNamespace(returncode=0, stdout=values[command[-1]] + "\n")
+
+    assert validate_git_identity(tmp_path, runner=configured) == values
+
+    def missing(_command: list[str], **_: Any) -> Any:
+        return SimpleNamespace(returncode=1, stdout="")
+
+    with pytest.raises(RuntimeError, match="Git user.name is not configured"):
+        validate_git_identity(tmp_path, runner=missing)
 
 
 def test_git_allowlist_and_written_metadata_never_contain_secret(tmp_path: Path) -> None:

@@ -38,6 +38,12 @@ def main() -> int:
         print(json.dumps(matrix_audit(args.results_root), indent=2, ensure_ascii=False))
         return 0
 
+    from ml.phase4_persistence import validate_git_identity, validate_persistence_environment
+
+    validate_persistence_environment()
+    if args.sync_github:
+        validate_git_identity(PROJECT_ROOT)
+
     import torch
 
     if not torch.cuda.is_available():
