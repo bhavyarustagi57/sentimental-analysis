@@ -12,12 +12,13 @@ The local machine used to prepare this package has no CUDA device. Its queue is 
 - `ml/modern_benchmark_queue.py`: immutable run configurations, atomic queue state, validation, and canonical promotion.
 - `ml/modern_benchmark_analysis.py`: summaries and frontend-ready data, enabled only when all 24 runs pass.
 - `scripts/run_phase4_free_gpu.py`: bounded free-GPU session runner.
+- `scripts/sync_phase4.py`: GitHub lightweight-state and private Hub checkpoint synchronization.
 - `notebooks/phase4_free_colab.ipynb`: Colab entry point.
 - `results/modern/staging/<dataset>__<model>/`: isolated configuration, state, checkpoints, predictions, and result.
 - `results/modern/queue.json`: reconstructed machine-readable queue.
 - `results/modern/results.json` and `results/modern/results.csv`: canonical validated results only.
 
-States are `PENDING`, `RUNNING`, `COMPLETED`, `FAILED`, `BLOCKED`, and `INVALID`. Writes use replacement of a complete temporary file or directory. Each new resume checkpoint replaces older optimizer-bearing resume checkpoints. After canonical promotion, resume checkpoints are removed; the selected best checkpoint remains.
+States are `PENDING`, `RUNNING`, `COMPLETED`, `FAILED`, `BLOCKED`, and `INVALID`. Writes use replacement of a complete temporary file or directory. Each new resume checkpoint replaces older optimizer-bearing resume checkpoints. A selected checkpoint is uploaded to the private repository named by `PHASE4_HF_REPO` and its remote file list is verified before promotion and local resume-checkpoint cleanup. Git tracks lightweight JSON/CSV/JSONL evidence; `.safetensors`, `.pt`, checkpoint, tokenizer, and saved model-config directories are explicitly ignored.
 
 ## Locked experiment protocol
 
@@ -35,52 +36,52 @@ Training time is synchronized GPU compute from the first optimization batch thro
 
 ## Google Colab Free
 
-1. Put a lean copy of the repository in Google Drive. It must contain source, `datasets/processed`, `datasets/splits`, both requirements files, and the notebook. The large Phase 3 smoke checkpoints, `.venv*`, `node_modules`, raw source archives, and caches are not needed in the cloud copy. Do not delete them from the original project.
-2. Reserve a separate Drive folder such as `MyDrive/sentiment-phase4-results` for persistent queue state and final checkpoints. Expect roughly 12 GB for the 16 fully fine-tuned encoder checkpoints, plus temporary headroom for the active optimizer checkpoint. Free Drive space should be checked before every session.
-3. Open `notebooks/phase4_free_colab.ipynb`, choose **Runtime > Change runtime type > T4 GPU** (or another available free GPU), and set the repository and result paths in the setup cell.
+1. Store source and lightweight benchmark evidence in the GitHub repository. Add Colab secrets named `GH_TOKEN`, `PHASE4_GITHUB_REPO` (`owner/repository`), `HF_TOKEN`, and `PHASE4_HF_REPO` (`owner/private-model-repository`). Grant the minimum GitHub repository permission needed to push and Hugging Face write permission to that one private model repository.
+2. Open `notebooks/phase4_free_colab.ipynb` and choose **Runtime > Change runtime type > T4 GPU** (or another available free GPU). The notebook clones a fresh checkout under `/content`; `results/modern` is restored by that clone.
+3. The notebook configures Git authentication from the process environment. Tokens are never inserted into a URL, source file, result, log, or committed Git configuration.
 4. Run the CUDA check. If no accelerator is assigned, stop and leave the run `BLOCKED — GPU UNAVAILABLE`; never buy or select paid compute for this benchmark.
 5. Install `requirements-transformer-smoke.txt`. Do not upgrade individual packages to make a model load.
-6. Authenticate interactively with Hugging Face for official gated Gemma access. Never paste a token into a notebook cell, result, or repository file.
+6. `HF_TOKEN` provides both official gated Gemma access and write access to the configured private checkpoint repository. Never print it.
 7. Run one experiment per invocation:
 
    ```text
-   python scripts/run_phase4_free_gpu.py --results-root "/content/drive/MyDrive/sentiment-phase4-results" --max-runs 1
+   python scripts/run_phase4_free_gpu.py --results-root "results/modern" --max-runs 1 --sync-github
    ```
 
-8. Re-run the same command in later sessions. GPU-unavailable blocks are reset to `PENDING` only after CUDA is actually detected. Completed runs are skipped.
+8. A completed run uploads and verifies only `checkpoints/best/model`, tokenizer/config, and required metadata on the private Hub. It then promotes and pushes lightweight evidence to GitHub. Re-clone GitHub in later sessions; completed runs are skipped.
 9. Inspect state at any time:
 
    ```text
-   python -m ml.modern_benchmark audit --results-root "/content/drive/MyDrive/sentiment-phase4-results"
+   python -m ml.modern_benchmark audit --results-root "results/modern"
    ```
 
 10. Generate comparisons only after the audit reports 24 completed and zero failed, blocked, invalid, or missing runs:
 
    ```text
-   python -m ml.modern_benchmark analyze --results-root "/content/drive/MyDrive/sentiment-phase4-results"
+   python -m ml.modern_benchmark analyze --results-root "results/modern"
    ```
 
-If Drive is close to full, stop before starting another run. Never remove a promoted `best/model` checkpoint. Only `.incomplete` directories from an interrupted atomic write may be discarded after confirming a valid prior `checkpoint-step-*` exists.
+If the Git push fails after Hub upload, run `python scripts/sync_phase4.py push-lightweight` before resetting the runtime. The selected checkpoint is already durable on the Hub, but the Git push is what preserves canonical queue/result state.
 
 ## Kaggle free GPU
 
 1. Create a private Kaggle notebook, attach a private dataset containing the lean project, and enable a free GPU under **Notebook options > Accelerator**. Internet must be enabled for immutable Hugging Face downloads.
-2. Copy the read-only input project to `/kaggle/working/sentimental-analysis-main`. Put the queue/result directory under `/kaggle/working/sentiment-phase4-results`.
-3. Add `HF_TOKEN` as a Kaggle secret for Gemma and expose it only to the process environment. Do not print it or copy it into project files.
+2. Clone the GitHub repository into `/kaggle/working/sentimental-analysis-main`; its committed `results/modern` restores lightweight state.
+3. Add `HF_TOKEN`, `PHASE4_HF_REPO`, and the minimum GitHub credentials as Kaggle secrets and expose them only to the process environment. Do not print them or copy them into project files.
 4. Install the locked requirements, verify `torch.cuda.is_available()`, then run:
 
    ```text
-   python scripts/run_phase4_free_gpu.py --results-root "/kaggle/working/sentiment-phase4-results" --max-runs 1
+   python scripts/run_phase4_free_gpu.py --results-root "results/modern" --max-runs 1 --sync-github
    ```
 
-5. At session end, save a notebook version with output so the result directory is preserved. Before the next session, attach that output as a private dataset, copy the entire prior result directory back into `/kaggle/working/sentiment-phase4-results`, and then continue. Do not initialize a fresh queue over a missing prior output.
+5. Confirm the Git push succeeds before session end. The next fresh clone restores the queue/results; selected checkpoints remain in the private Hugging Face repository.
 6. If the free GPU or Internet is unavailable, preserve state and stop. Classify it as GPU availability or transient infrastructure rather than an experiment failure.
 
-Kaggle output quotas may be tighter than the retained full encoder artifacts. Colab plus a lean, dedicated Drive results folder is the preferred zero-cost route when sufficient Drive space is available.
+Large optimizer-bearing resume checkpoints are intentionally not uploaded because repeated multi-gigabyte synchronization is impractical on free sessions. A runtime reset during the one currently `RUNNING` experiment can therefore require that experiment to restart. Previously `COMPLETED` experiments do not need retraining.
 
 ## Recovery and failure handling
 
-The session runner selects only `PENDING` runs. A `RUNNING` run resumes from its latest safe checkpoint when invoked explicitly with its dataset and model. Failed or blocked states remain visible and are never silently skipped as completed. Diagnose the recorded failure before changing state. OOM recovery halves the physical batch and raises accumulation to retain effective batch 32; it does not change splits, sequence length, epochs, or metrics.
+The session runner resumes a `RUNNING` run before selecting a `PENDING` run. Failed or blocked states remain visible and are never silently skipped as completed. Diagnose the recorded failure before changing state. OOM recovery halves the physical batch and raises accumulation to retain effective batch 32; it does not change splits, sequence length, epochs, or metrics.
 
 The final test-attempt counter prevents an accidental second canonical test evaluation. Use `--allow-test-rerun` only after documenting a proven technical invalidation. Revision, split-hash, checkpoint, prediction-count, prediction-hash, finite-value, and binary-label checks run before promotion.
 
@@ -91,6 +92,9 @@ python -m ml.modern_benchmark status
 python -m ml.modern_benchmark run --dataset imdb --model eurobert_210m
 python -m ml.modern_benchmark rebuild
 python -m ml.modern_benchmark audit
+python scripts/sync_phase4.py pull-lightweight
+python scripts/sync_phase4.py restore-checkpoint --dataset imdb --model eurobert_210m
+python scripts/sync_phase4.py push-lightweight
 ```
 
 The accepted dataset keys are `imdb`, `sentiment140`, `amazon_polarity`, and `yelp_polarity`. The model keys are `eurobert_210m`, `ettin_encoder_150m`, `neobert`, `mmbert_small`, `gemma3_270m`, and `qwen3_0_6b`.

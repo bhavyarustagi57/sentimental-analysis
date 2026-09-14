@@ -45,5 +45,10 @@ datasets/raw/
 
 # Generated ML model artifacts/checkpoints
 models/
+*.safetensors
+*.pt
+results/modern/staging/*/checkpoints/
+results/modern/staging/*/tokenizer/
+results/modern/staging/*/config/
 
 .pytest_cache/

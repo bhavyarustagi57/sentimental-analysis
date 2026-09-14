@@ -10,7 +10,7 @@ import os
 from dataclasses import dataclass
 from datetime import datetime, timezone
 from enum import Enum
-from pathlib import Path
+from pathlib import Path, PurePosixPath
 from typing import Any, Iterable, Mapping
 
 from .config import DATASETS, RESULTS_DIR
@@ -377,6 +377,7 @@ def validate_completed_result(
         "labels", "max_sequence_length", "truncation_rate", "checkpoint_reload_verified",
         "training_history", "training_configuration", "oom_adjustments", "hardware",
         "training_timing_definition", "inference_timing_definition",
+        "checkpoint_persistence",
     )
     for field in required_metadata:
         if field not in result:
@@ -406,6 +407,16 @@ def validate_completed_result(
         or hardware["precision"] != result["numeric_precision"]
     ):
         raise ValueError("Nested and top-level hardware metadata are inconsistent.")
+    persistence = result["checkpoint_persistence"]
+    if (
+        persistence.get("verified") is not True
+        or not persistence.get("repo_id")
+        or persistence.get("repo_type") != "model"
+        or persistence.get("path_in_repo") != str(PurePosixPath("phase4") / run_id(result["dataset"], result["model"]))
+    ):
+        raise ValueError("Completed checkpoint persistence metadata is invalid.")
+    if any("token" in str(key).lower() for key in persistence):
+        raise ValueError("Checkpoint persistence metadata must never contain token fields.")
     checkpoint = Path(str(result["checkpoint_identifier"]))
     if not checkpoint.is_dir() or not any(checkpoint.glob("*.safetensors")):
         raise ValueError("Validation-selected safetensors checkpoint is missing.")

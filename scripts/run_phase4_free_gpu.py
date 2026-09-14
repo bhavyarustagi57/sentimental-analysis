@@ -28,6 +28,7 @@ def main() -> int:
     parser.add_argument("--max-runs", type=int, default=1, help="Maximum experiments for this free-GPU session.")
     parser.add_argument("--results-root", type=Path, default=MODERN_RESULTS_ROOT)
     parser.add_argument("--status-only", action="store_true")
+    parser.add_argument("--sync-github", action="store_true", help="Commit/push lightweight evidence after each completion.")
     args = parser.parse_args()
     if args.max_runs < 1:
         parser.error("--max-runs must be positive")
@@ -53,7 +54,14 @@ def main() -> int:
             break
         selected = candidates[0]
         print(f"STARTING {selected['run_id']}", flush=True)
-        execute_final_run(selected["dataset"], selected["model"], results_root=args.results_root)
+        execute_final_run(
+            selected["dataset"], selected["model"], results_root=args.results_root,
+            sync_github=args.sync_github,
+        )
+        if args.sync_github:
+            from ml.phase4_persistence import sync_lightweight_to_github
+
+            sync_lightweight_to_github(PROJECT_ROOT, results_root=args.results_root)
         completed_this_session += 1
         print(f"COMPLETED {selected['run_id']}", flush=True)
     print(json.dumps(matrix_audit(args.results_root), indent=2, ensure_ascii=False))

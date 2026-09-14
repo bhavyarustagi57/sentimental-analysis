@@ -328,6 +328,7 @@ def execute_final_run(
     results_root: Path = MODERN_RESULTS_ROOT,
     allow_test_rerun: bool = False,
     checkpoint_interval_steps: int = CHECKPOINT_INTERVAL_STEPS,
+    sync_github: bool = False,
 ) -> dict[str, Any]:
     """Execute and promote one real final run; CPU is deliberately rejected."""
     import torch
@@ -359,6 +360,9 @@ def execute_final_run(
             results_root=results_root,
         )
         raise RuntimeError("Final Transformer training requires a free CUDA GPU; run marked BLOCKED.")
+    from .phase4_persistence import validate_persistence_environment
+
+    validate_persistence_environment()
 
     state = read_json(paths.state)
     if RunStatus(state["status"]) is RunStatus.COMPLETED:
@@ -651,6 +655,17 @@ def execute_final_run(
             "completed_at": utc_now(),
         }
         atomic_json(paths.result, result)
+        from .phase4_persistence import persist_completed_checkpoint, sync_lightweight_to_github
+
+        if sync_github:
+            sync_lightweight_to_github(
+                Path(__file__).resolve().parents[1], results_root=results_root,
+            )
+
+        result["checkpoint_persistence"] = persist_completed_checkpoint(
+            dataset_key, model_key, results_root=results_root,
+        )
+        atomic_json(paths.result, result)
         promote_staged_result(dataset_key, model_key, results_root)
         _cleanup_resume_checkpoints(paths)
         return result
@@ -688,6 +703,7 @@ def main() -> int:
     parser.add_argument("--model", choices=MODERN_MODEL_KEYS)
     parser.add_argument("--results-root", type=Path, default=MODERN_RESULTS_ROOT)
     parser.add_argument("--allow-test-rerun", action="store_true")
+    parser.add_argument("--sync-github", action="store_true")
     args = parser.parse_args()
     if args.command == "init":
         _print_audit(initialize_queue(args.results_root))
@@ -720,6 +736,7 @@ def main() -> int:
         print(json.dumps(execute_final_run(
             args.dataset, args.model, results_root=args.results_root,
             allow_test_rerun=args.allow_test_rerun,
+            sync_github=args.sync_github,
         ), indent=2, ensure_ascii=False))
     else:
         initialize_queue(args.results_root)
@@ -733,6 +750,7 @@ def main() -> int:
         print(json.dumps(execute_final_run(
             selected["dataset"], selected["model"], results_root=args.results_root,
             allow_test_rerun=args.allow_test_rerun,
+            sync_github=args.sync_github,
         ), indent=2, ensure_ascii=False))
     return 0
 

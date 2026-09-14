@@ -107,6 +107,10 @@ def _valid_result(tmp_path: Path, dataset: str, model: str) -> dict[str, object]
                      "accelerate": "fixture", "peft": "fixture", "safetensors": "fixture",
                      "device_type": "cuda", "device_name": "Fixture GPU", "precision": "fp16"},
         "training_timing_definition": "fixture", "inference_timing_definition": "fixture",
+        "checkpoint_persistence": {"repo_id": "owner/private-phase4", "repo_type": "model",
+                                   "path_in_repo": f"phase4/{dataset}__{model}",
+                                   "commit": "fixture", "verified": True,
+                                   "verified_file_count": 3, "persisted_at": "2026-01-01T00:00:00+00:00"},
         "completed_at": "2026-01-01T00:00:00+00:00",
     }
     checkpoint = paths.checkpoints / "best" / "model"
