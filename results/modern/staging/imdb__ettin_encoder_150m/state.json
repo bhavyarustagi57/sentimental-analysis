@@ -3,12 +3,12 @@
   "run_id": "imdb__ettin_encoder_150m",
   "dataset": "imdb",
   "model": "ettin_encoder_150m",
-  "status": "RUNNING",
+  "status": "COMPLETED",
   "attempt": 1,
   "created_at": "2026-09-13T20:53:41.576121+00:00",
-  "updated_at": "2026-09-14T09:29:09.412448+00:00",
+  "updated_at": "2026-09-14T09:30:26.460406+00:00",
   "started_at": "2026-09-14T08:55:16.481362+00:00",
-  "completed_at": null,
+  "completed_at": "2026-09-14T09:30:26.460406+00:00",
   "last_checkpoint": "/content/sentimental-analysis-modern/results/modern/staging/imdb__ettin_encoder_150m/checkpoints/checkpoint-step-000675",
   "best_checkpoint": "/content/sentimental-analysis-modern/results/modern/staging/imdb__ettin_encoder_150m/checkpoints/best/model",
   "current_epoch": 3,
@@ -17,5 +17,6 @@
   "oom_adjustments": [],
   "failure": null,
   "physical_batch_size": 16,
-  "gradient_accumulation_steps": 2
+  "gradient_accumulation_steps": 2,
+  "recovered_failure": null
 }

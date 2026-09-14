@@ -1,0 +1,9 @@
+{
+  "repo_id": "BHAVYARUSTAGI/sentiment-phase4-artifacts",
+  "repo_type": "model",
+  "path_in_repo": "phase4/imdb__ettin_encoder_150m",
+  "commit": "858fcf900e02754aaa6c3699852456b3f633ac2c",
+  "verified": true,
+  "verified_file_count": 10,
+  "persisted_at": "2026-09-14T09:30:25.903894+00:00"
+}
