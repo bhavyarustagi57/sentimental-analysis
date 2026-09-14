@@ -114,5 +114,14 @@
   },
   "training_timing_definition": "Cumulative synchronized model compute from the first training forward pass through each epoch validation pass; excludes model/tokenizer download, tokenization, and checkpoint I/O.",
   "inference_timing_definition": "Synchronized clean-reload evaluation loop over all 2,000 pre-tokenized test examples; includes batch collation/device transfer/model forward, excludes checkpoint reload and tokenization.",
-  "completed_at": "2026-09-14T09:53:21.110667+00:00"
+  "completed_at": "2026-09-14T09:53:21.110667+00:00",
+  "checkpoint_persistence": {
+    "repo_id": "BHAVYARUSTAGI/sentiment-phase4-artifacts",
+    "repo_type": "model",
+    "path_in_repo": "phase4/imdb__mmbert_small",
+    "commit": "38754dc8412931dc3aa32dab4ec997230770534f",
+    "verified": true,
+    "verified_file_count": 10,
+    "persisted_at": "2026-09-14T09:53:31.305264+00:00"
+  }
 }

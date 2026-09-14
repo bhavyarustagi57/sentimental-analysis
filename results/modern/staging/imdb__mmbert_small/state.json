@@ -3,12 +3,12 @@
   "run_id": "imdb__mmbert_small",
   "dataset": "imdb",
   "model": "mmbert_small",
-  "status": "RUNNING",
+  "status": "COMPLETED",
   "attempt": 1,
   "created_at": "2026-09-13T20:53:41.598564+00:00",
-  "updated_at": "2026-09-14T09:52:50.105502+00:00",
+  "updated_at": "2026-09-14T09:53:31.876399+00:00",
   "started_at": "2026-09-14T09:33:50.918231+00:00",
-  "completed_at": null,
+  "completed_at": "2026-09-14T09:53:31.876399+00:00",
   "last_checkpoint": "/content/sentimental-analysis-modern/results/modern/staging/imdb__mmbert_small/checkpoints/checkpoint-step-000675",
   "best_checkpoint": "/content/sentimental-analysis-modern/results/modern/staging/imdb__mmbert_small/checkpoints/best/model",
   "current_epoch": 3,
@@ -17,5 +17,6 @@
   "oom_adjustments": [],
   "failure": null,
   "physical_batch_size": 16,
-  "gradient_accumulation_steps": 2
+  "gradient_accumulation_steps": 2,
+  "recovered_failure": null
 }
