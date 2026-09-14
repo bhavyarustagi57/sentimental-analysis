@@ -3,10 +3,10 @@
   "run_id": "sentiment140__ettin_encoder_150m",
   "dataset": "sentiment140",
   "model": "ettin_encoder_150m",
-  "status": "BLOCKED",
+  "status": "PENDING",
   "attempt": 0,
   "created_at": "2026-09-13T20:53:41.635049+00:00",
-  "updated_at": "2026-09-13T20:53:42.591849+00:00",
+  "updated_at": "2026-09-14T08:32:23.064152+00:00",
   "started_at": null,
   "completed_at": null,
   "last_checkpoint": null,
@@ -15,9 +15,5 @@
   "current_step": 0,
   "test_evaluation_attempts": 0,
   "oom_adjustments": [],
-  "failure": {
-    "classification": "gpu_availability_failure",
-    "message": "BLOCKED — GPU UNAVAILABLE: final training was not executed on local CPU.",
-    "recorded_at": "2026-09-13T20:53:42.591008+00:00"
-  }
+  "failure": null
 }

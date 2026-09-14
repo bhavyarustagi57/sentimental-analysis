@@ -3,21 +3,25 @@
   "run_id": "imdb__eurobert_210m",
   "dataset": "imdb",
   "model": "eurobert_210m",
-  "status": "BLOCKED",
-  "attempt": 0,
+  "status": "COMPLETED",
+  "attempt": 1,
   "created_at": "2026-09-13T20:53:41.567309+00:00",
-  "updated_at": "2026-09-13T20:53:42.280374+00:00",
-  "started_at": null,
-  "completed_at": null,
+  "updated_at": "2026-09-14T07:43:18.502591+00:00",
+  "started_at": "2026-09-14T07:10:38.562305+00:00",
+  "completed_at": "2026-09-14T07:43:18.398709+00:00",
   "last_checkpoint": null,
-  "best_checkpoint": null,
-  "current_epoch": 0,
-  "current_step": 0,
-  "test_evaluation_attempts": 0,
+  "best_checkpoint": "/content/sentimental-analysis-modern/results/modern/staging/imdb__eurobert_210m/checkpoints/best/model",
+  "current_epoch": 3,
+  "current_step": 675,
+  "test_evaluation_attempts": 1,
   "oom_adjustments": [],
-  "failure": {
-    "classification": "gpu_availability_failure",
-    "message": "BLOCKED — GPU UNAVAILABLE: final training was not executed on local CPU.",
-    "recorded_at": "2026-09-13T20:53:42.278360+00:00"
+  "failure": null,
+  "physical_batch_size": 8,
+  "gradient_accumulation_steps": 4,
+  "recovered_failure": {
+    "classification": "unknown",
+    "type": "CalledProcessError",
+    "message": "Command '['git', 'commit', '-m', 'Persist Phase 4 benchmark state', '--only', '--', 'results/modern/queue.json', 'results/modern/staging/amazon_polarity__ettin_encoder_150m/config.json', 'results/modern/staging/amazon_polarity__ettin_encoder_150m/state.json', 'results/modern/staging/amazon_polarity__eurobert_210m/config.json', 'results/modern/staging/amazon_polarity__eurobert_210m/state.json', 'results/modern/staging/amazon_polarity__gemma3_270m/config.json', 'results/modern/staging/amazon_polarity__gemma3_270m/state.json', 'results/modern/staging/amazon_polarity__mmbert_small/config.json', 'results/modern/staging/amazon_polarity__mmbert_small/state.json', 'results/modern/staging/amazon_polarity__neobert/config.json', 'results/modern/staging/amazon_polarity__neobert/state.json', 'results/modern/staging/amazon_polarity__qwen3_0_6b/config.json', 'results/modern/staging/amazon_polarity__qwen3_0_6b/state.json', 'results/modern/staging/imdb__ettin_encoder_150m/config.json', 'results/modern/staging/imdb__ettin_encoder_150m/state.json', 'results/modern/staging/imdb__eurobert_210m/config.json', 'results/modern/staging/imdb__eurobert_210m/predictions.jsonl', 'results/modern/staging/imdb__eurobert_210m/result.json', 'results/modern/staging/imdb__eurobert_210m/state.json', 'results/modern/staging/imdb__eurobert_210m/training_history.json', 'results/modern/staging/imdb__gemma3_270m/config.json', 'results/modern/staging/imdb__gemma3_270m/state.json', 'results/modern/staging/imdb__mmbert_small/config.json', 'results/modern/staging/imdb__mmbert_small/state.json', 'results/modern/staging/imdb__neobert/config.json', 'results/modern/staging/imdb__neobert/state.json', 'results/modern/staging/imdb__qwen3_0_6b/config.json', 'results/modern/staging/imdb__qwen3_0_6b/state.json', 'results/modern/staging/sentiment140__ettin_encoder_150m/config.json', 'results/modern/staging/sentiment140__ettin_encoder_150m/state.json', 'results/modern/staging/sentiment140__eurobert_210m/config.json', 'results/modern/staging/sentiment140__eurobert_210m/state.json', 'results/modern/staging/sentiment140__gemma3_270m/config.json', 'results/modern/staging/sentiment140__gemma3_270m/state.json', 'results/modern/staging/sentiment140__mmbert_small/config.json', 'results/modern/staging/sentiment140__mmbert_small/state.json', 'results/modern/staging/sentiment140__neobert/config.json', 'results/modern/staging/sentiment140__neobert/state.json', 'results/modern/staging/sentiment140__qwen3_0_6b/config.json', 'results/modern/staging/sentiment140__qwen3_0_6b/state.json', 'results/modern/staging/yelp_polarity__ettin_encoder_150m/config.json', 'results/modern/staging/yelp_polarity__ettin_encoder_150m/state.json', 'results/modern/staging/yelp_polarity__eurobert_210m/config.json', 'results/modern/staging/yelp_polarity__eurobert_210m/state.json', 'results/modern/staging/yelp_polarity__gemma3_270m/config.json', 'results/modern/staging/yelp_polarity__gemma3_270m/state.json', 'results/modern/staging/yelp_polarity__mmbert_small/config.json', 'results/modern/staging/yelp_polarity__mmbert_small/state.json', 'results/modern/staging/yelp_polarity__neobert/config.json', 'results/modern/staging/yelp_polarity__neobert/state.json', 'results/modern/staging/yelp_polarity__qwen3_0_6b/config.json', 'results/modern/staging/yelp_polarity__qwen3_0_6b/state.json']' returned non-zero exit status 128.",
+    "recorded_at": "2026-09-14T07:43:18.502389+00:00"
   }
 }

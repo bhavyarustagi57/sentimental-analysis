@@ -1,13 +1,13 @@
 {
   "schema_version": 1,
   "expected_runs": 24,
-  "updated_at": "2026-09-13T21:03:16.272001+00:00",
+  "updated_at": "2026-09-14T09:29:09.414395+00:00",
   "counts": {
-    "PENDING": 0,
-    "RUNNING": 0,
-    "COMPLETED": 0,
+    "PENDING": 22,
+    "RUNNING": 1,
+    "COMPLETED": 1,
     "FAILED": 0,
-    "BLOCKED": 24,
+    "BLOCKED": 0,
     "INVALID": 0
   },
   "runs": [
@@ -16,22 +16,26 @@
       "run_id": "imdb__eurobert_210m",
       "dataset": "imdb",
       "model": "eurobert_210m",
-      "status": "BLOCKED",
-      "attempt": 0,
+      "status": "COMPLETED",
+      "attempt": 1,
       "created_at": "2026-09-13T20:53:41.567309+00:00",
-      "updated_at": "2026-09-13T20:53:42.280374+00:00",
-      "started_at": null,
-      "completed_at": null,
+      "updated_at": "2026-09-14T07:43:18.502591+00:00",
+      "started_at": "2026-09-14T07:10:38.562305+00:00",
+      "completed_at": "2026-09-14T07:43:18.398709+00:00",
       "last_checkpoint": null,
-      "best_checkpoint": null,
-      "current_epoch": 0,
-      "current_step": 0,
-      "test_evaluation_attempts": 0,
+      "best_checkpoint": "/content/sentimental-analysis-modern/results/modern/staging/imdb__eurobert_210m/checkpoints/best/model",
+      "current_epoch": 3,
+      "current_step": 675,
+      "test_evaluation_attempts": 1,
       "oom_adjustments": [],
-      "failure": {
-        "classification": "gpu_availability_failure",
-        "message": "BLOCKED — GPU UNAVAILABLE: final training was not executed on local CPU.",
-        "recorded_at": "2026-09-13T20:53:42.278360+00:00"
+      "failure": null,
+      "physical_batch_size": 8,
+      "gradient_accumulation_steps": 4,
+      "recovered_failure": {
+        "classification": "unknown",
+        "type": "CalledProcessError",
+        "message": "Command '['git', 'commit', '-m', 'Persist Phase 4 benchmark state', '--only', '--', 'results/modern/queue.json', 'results/modern/staging/amazon_polarity__ettin_encoder_150m/config.json', 'results/modern/staging/amazon_polarity__ettin_encoder_150m/state.json', 'results/modern/staging/amazon_polarity__eurobert_210m/config.json', 'results/modern/staging/amazon_polarity__eurobert_210m/state.json', 'results/modern/staging/amazon_polarity__gemma3_270m/config.json', 'results/modern/staging/amazon_polarity__gemma3_270m/state.json', 'results/modern/staging/amazon_polarity__mmbert_small/config.json', 'results/modern/staging/amazon_polarity__mmbert_small/state.json', 'results/modern/staging/amazon_polarity__neobert/config.json', 'results/modern/staging/amazon_polarity__neobert/state.json', 'results/modern/staging/amazon_polarity__qwen3_0_6b/config.json', 'results/modern/staging/amazon_polarity__qwen3_0_6b/state.json', 'results/modern/staging/imdb__ettin_encoder_150m/config.json', 'results/modern/staging/imdb__ettin_encoder_150m/state.json', 'results/modern/staging/imdb__eurobert_210m/config.json', 'results/modern/staging/imdb__eurobert_210m/predictions.jsonl', 'results/modern/staging/imdb__eurobert_210m/result.json', 'results/modern/staging/imdb__eurobert_210m/state.json', 'results/modern/staging/imdb__eurobert_210m/training_history.json', 'results/modern/staging/imdb__gemma3_270m/config.json', 'results/modern/staging/imdb__gemma3_270m/state.json', 'results/modern/staging/imdb__mmbert_small/config.json', 'results/modern/staging/imdb__mmbert_small/state.json', 'results/modern/staging/imdb__neobert/config.json', 'results/modern/staging/imdb__neobert/state.json', 'results/modern/staging/imdb__qwen3_0_6b/config.json', 'results/modern/staging/imdb__qwen3_0_6b/state.json', 'results/modern/staging/sentiment140__ettin_encoder_150m/config.json', 'results/modern/staging/sentiment140__ettin_encoder_150m/state.json', 'results/modern/staging/sentiment140__eurobert_210m/config.json', 'results/modern/staging/sentiment140__eurobert_210m/state.json', 'results/modern/staging/sentiment140__gemma3_270m/config.json', 'results/modern/staging/sentiment140__gemma3_270m/state.json', 'results/modern/staging/sentiment140__mmbert_small/config.json', 'results/modern/staging/sentiment140__mmbert_small/state.json', 'results/modern/staging/sentiment140__neobert/config.json', 'results/modern/staging/sentiment140__neobert/state.json', 'results/modern/staging/sentiment140__qwen3_0_6b/config.json', 'results/modern/staging/sentiment140__qwen3_0_6b/state.json', 'results/modern/staging/yelp_polarity__ettin_encoder_150m/config.json', 'results/modern/staging/yelp_polarity__ettin_encoder_150m/state.json', 'results/modern/staging/yelp_polarity__eurobert_210m/config.json', 'results/modern/staging/yelp_polarity__eurobert_210m/state.json', 'results/modern/staging/yelp_polarity__gemma3_270m/config.json', 'results/modern/staging/yelp_polarity__gemma3_270m/state.json', 'results/modern/staging/yelp_polarity__mmbert_small/config.json', 'results/modern/staging/yelp_polarity__mmbert_small/state.json', 'results/modern/staging/yelp_polarity__neobert/config.json', 'results/modern/staging/yelp_polarity__neobert/state.json', 'results/modern/staging/yelp_polarity__qwen3_0_6b/config.json', 'results/modern/staging/yelp_polarity__qwen3_0_6b/state.json']' returned non-zero exit status 128.",
+        "recorded_at": "2026-09-14T07:43:18.502389+00:00"
       }
     },
     {
@@ -39,33 +43,31 @@
       "run_id": "imdb__ettin_encoder_150m",
       "dataset": "imdb",
       "model": "ettin_encoder_150m",
-      "status": "BLOCKED",
-      "attempt": 0,
+      "status": "RUNNING",
+      "attempt": 1,
       "created_at": "2026-09-13T20:53:41.576121+00:00",
-      "updated_at": "2026-09-13T20:53:42.320571+00:00",
-      "started_at": null,
+      "updated_at": "2026-09-14T09:29:09.412448+00:00",
+      "started_at": "2026-09-14T08:55:16.481362+00:00",
       "completed_at": null,
-      "last_checkpoint": null,
-      "best_checkpoint": null,
-      "current_epoch": 0,
-      "current_step": 0,
-      "test_evaluation_attempts": 0,
+      "last_checkpoint": "/content/sentimental-analysis-modern/results/modern/staging/imdb__ettin_encoder_150m/checkpoints/checkpoint-step-000675",
+      "best_checkpoint": "/content/sentimental-analysis-modern/results/modern/staging/imdb__ettin_encoder_150m/checkpoints/best/model",
+      "current_epoch": 3,
+      "current_step": 675,
+      "test_evaluation_attempts": 1,
       "oom_adjustments": [],
-      "failure": {
-        "classification": "gpu_availability_failure",
-        "message": "BLOCKED — GPU UNAVAILABLE: final training was not executed on local CPU.",
-        "recorded_at": "2026-09-13T20:53:42.320571+00:00"
-      }
+      "failure": null,
+      "physical_batch_size": 16,
+      "gradient_accumulation_steps": 2
     },
     {
       "schema_version": 1,
       "run_id": "imdb__neobert",
       "dataset": "imdb",
       "model": "neobert",
-      "status": "BLOCKED",
+      "status": "PENDING",
       "attempt": 0,
       "created_at": "2026-09-13T20:53:41.591005+00:00",
-      "updated_at": "2026-09-13T20:53:42.369896+00:00",
+      "updated_at": "2026-09-14T08:32:23.052552+00:00",
       "started_at": null,
       "completed_at": null,
       "last_checkpoint": null,
@@ -74,21 +76,17 @@
       "current_step": 0,
       "test_evaluation_attempts": 0,
       "oom_adjustments": [],
-      "failure": {
-        "classification": "gpu_availability_failure",
-        "message": "BLOCKED — GPU UNAVAILABLE: final training was not executed on local CPU.",
-        "recorded_at": "2026-09-13T20:53:42.369896+00:00"
-      }
+      "failure": null
     },
     {
       "schema_version": 1,
       "run_id": "imdb__mmbert_small",
       "dataset": "imdb",
       "model": "mmbert_small",
-      "status": "BLOCKED",
+      "status": "PENDING",
       "attempt": 0,
       "created_at": "2026-09-13T20:53:41.598564+00:00",
-      "updated_at": "2026-09-13T20:53:42.414346+00:00",
+      "updated_at": "2026-09-14T08:32:23.054985+00:00",
       "started_at": null,
       "completed_at": null,
       "last_checkpoint": null,
@@ -97,21 +95,17 @@
       "current_step": 0,
       "test_evaluation_attempts": 0,
       "oom_adjustments": [],
-      "failure": {
-        "classification": "gpu_availability_failure",
-        "message": "BLOCKED — GPU UNAVAILABLE: final training was not executed on local CPU.",
-        "recorded_at": "2026-09-13T20:53:42.414346+00:00"
-      }
+      "failure": null
     },
     {
       "schema_version": 1,
       "run_id": "imdb__gemma3_270m",
       "dataset": "imdb",
       "model": "gemma3_270m",
-      "status": "BLOCKED",
+      "status": "PENDING",
       "attempt": 0,
       "created_at": "2026-09-13T20:53:41.608591+00:00",
-      "updated_at": "2026-09-13T20:53:42.451744+00:00",
+      "updated_at": "2026-09-14T08:32:23.057325+00:00",
       "started_at": null,
       "completed_at": null,
       "last_checkpoint": null,
@@ -120,21 +114,17 @@
       "current_step": 0,
       "test_evaluation_attempts": 0,
       "oom_adjustments": [],
-      "failure": {
-        "classification": "gpu_availability_failure",
-        "message": "BLOCKED — GPU UNAVAILABLE: final training was not executed on local CPU.",
-        "recorded_at": "2026-09-13T20:53:42.451744+00:00"
-      }
+      "failure": null
     },
     {
       "schema_version": 1,
       "run_id": "imdb__qwen3_0_6b",
       "dataset": "imdb",
       "model": "qwen3_0_6b",
-      "status": "BLOCKED",
+      "status": "PENDING",
       "attempt": 0,
       "created_at": "2026-09-13T20:53:41.617503+00:00",
-      "updated_at": "2026-09-13T20:53:42.487521+00:00",
+      "updated_at": "2026-09-14T08:32:23.059545+00:00",
       "started_at": null,
       "completed_at": null,
       "last_checkpoint": null,
@@ -143,21 +133,17 @@
       "current_step": 0,
       "test_evaluation_attempts": 0,
       "oom_adjustments": [],
-      "failure": {
-        "classification": "gpu_availability_failure",
-        "message": "BLOCKED — GPU UNAVAILABLE: final training was not executed on local CPU.",
-        "recorded_at": "2026-09-13T20:53:42.487521+00:00"
-      }
+      "failure": null
     },
     {
       "schema_version": 1,
       "run_id": "sentiment140__eurobert_210m",
       "dataset": "sentiment140",
       "model": "eurobert_210m",
-      "status": "BLOCKED",
+      "status": "PENDING",
       "attempt": 0,
       "created_at": "2026-09-13T20:53:41.624626+00:00",
-      "updated_at": "2026-09-13T20:53:42.539418+00:00",
+      "updated_at": "2026-09-14T08:32:23.061894+00:00",
       "started_at": null,
       "completed_at": null,
       "last_checkpoint": null,
@@ -166,21 +152,17 @@
       "current_step": 0,
       "test_evaluation_attempts": 0,
       "oom_adjustments": [],
-      "failure": {
-        "classification": "gpu_availability_failure",
-        "message": "BLOCKED — GPU UNAVAILABLE: final training was not executed on local CPU.",
-        "recorded_at": "2026-09-13T20:53:42.539418+00:00"
-      }
+      "failure": null
     },
     {
       "schema_version": 1,
       "run_id": "sentiment140__ettin_encoder_150m",
       "dataset": "sentiment140",
       "model": "ettin_encoder_150m",
-      "status": "BLOCKED",
+      "status": "PENDING",
       "attempt": 0,
       "created_at": "2026-09-13T20:53:41.635049+00:00",
-      "updated_at": "2026-09-13T20:53:42.591849+00:00",
+      "updated_at": "2026-09-14T08:32:23.064152+00:00",
       "started_at": null,
       "completed_at": null,
       "last_checkpoint": null,
@@ -189,21 +171,17 @@
       "current_step": 0,
       "test_evaluation_attempts": 0,
       "oom_adjustments": [],
-      "failure": {
-        "classification": "gpu_availability_failure",
-        "message": "BLOCKED — GPU UNAVAILABLE: final training was not executed on local CPU.",
-        "recorded_at": "2026-09-13T20:53:42.591008+00:00"
-      }
+      "failure": null
     },
     {
       "schema_version": 1,
       "run_id": "sentiment140__neobert",
       "dataset": "sentiment140",
       "model": "neobert",
-      "status": "BLOCKED",
+      "status": "PENDING",
       "attempt": 0,
       "created_at": "2026-09-13T20:53:41.643432+00:00",
-      "updated_at": "2026-09-13T20:53:42.633490+00:00",
+      "updated_at": "2026-09-14T08:32:23.066370+00:00",
       "started_at": null,
       "completed_at": null,
       "last_checkpoint": null,
@@ -212,21 +190,17 @@
       "current_step": 0,
       "test_evaluation_attempts": 0,
       "oom_adjustments": [],
-      "failure": {
-        "classification": "gpu_availability_failure",
-        "message": "BLOCKED — GPU UNAVAILABLE: final training was not executed on local CPU.",
-        "recorded_at": "2026-09-13T20:53:42.633490+00:00"
-      }
+      "failure": null
     },
     {
       "schema_version": 1,
       "run_id": "sentiment140__mmbert_small",
       "dataset": "sentiment140",
       "model": "mmbert_small",
-      "status": "BLOCKED",
+      "status": "PENDING",
       "attempt": 0,
       "created_at": "2026-09-13T20:53:41.655675+00:00",
-      "updated_at": "2026-09-13T20:53:42.676710+00:00",
+      "updated_at": "2026-09-14T08:32:23.068641+00:00",
       "started_at": null,
       "completed_at": null,
       "last_checkpoint": null,
@@ -235,21 +209,17 @@
       "current_step": 0,
       "test_evaluation_attempts": 0,
       "oom_adjustments": [],
-      "failure": {
-        "classification": "gpu_availability_failure",
-        "message": "BLOCKED — GPU UNAVAILABLE: final training was not executed on local CPU.",
-        "recorded_at": "2026-09-13T20:53:42.674984+00:00"
-      }
+      "failure": null
     },
     {
       "schema_version": 1,
       "run_id": "sentiment140__gemma3_270m",
       "dataset": "sentiment140",
       "model": "gemma3_270m",
-      "status": "BLOCKED",
+      "status": "PENDING",
       "attempt": 0,
       "created_at": "2026-09-13T20:53:41.663918+00:00",
-      "updated_at": "2026-09-13T20:53:42.720504+00:00",
+      "updated_at": "2026-09-14T08:32:23.070979+00:00",
       "started_at": null,
       "completed_at": null,
       "last_checkpoint": null,
@@ -258,21 +228,17 @@
       "current_step": 0,
       "test_evaluation_attempts": 0,
       "oom_adjustments": [],
-      "failure": {
-        "classification": "gpu_availability_failure",
-        "message": "BLOCKED — GPU UNAVAILABLE: final training was not executed on local CPU.",
-        "recorded_at": "2026-09-13T20:53:42.720504+00:00"
-      }
+      "failure": null
     },
     {
       "schema_version": 1,
       "run_id": "sentiment140__qwen3_0_6b",
       "dataset": "sentiment140",
       "model": "qwen3_0_6b",
-      "status": "BLOCKED",
+      "status": "PENDING",
       "attempt": 0,
       "created_at": "2026-09-13T20:53:41.674394+00:00",
-      "updated_at": "2026-09-13T20:53:42.749902+00:00",
+      "updated_at": "2026-09-14T08:32:23.073261+00:00",
       "started_at": null,
       "completed_at": null,
       "last_checkpoint": null,
@@ -281,21 +247,17 @@
       "current_step": 0,
       "test_evaluation_attempts": 0,
       "oom_adjustments": [],
-      "failure": {
-        "classification": "gpu_availability_failure",
-        "message": "BLOCKED — GPU UNAVAILABLE: final training was not executed on local CPU.",
-        "recorded_at": "2026-09-13T20:53:42.749902+00:00"
-      }
+      "failure": null
     },
     {
       "schema_version": 1,
       "run_id": "amazon_polarity__eurobert_210m",
       "dataset": "amazon_polarity",
       "model": "eurobert_210m",
-      "status": "BLOCKED",
+      "status": "PENDING",
       "attempt": 0,
       "created_at": "2026-09-13T20:53:41.690468+00:00",
-      "updated_at": "2026-09-13T20:53:42.802251+00:00",
+      "updated_at": "2026-09-14T08:32:23.075603+00:00",
       "started_at": null,
       "completed_at": null,
       "last_checkpoint": null,
@@ -304,21 +266,17 @@
       "current_step": 0,
       "test_evaluation_attempts": 0,
       "oom_adjustments": [],
-      "failure": {
-        "classification": "gpu_availability_failure",
-        "message": "BLOCKED — GPU UNAVAILABLE: final training was not executed on local CPU.",
-        "recorded_at": "2026-09-13T20:53:42.801588+00:00"
-      }
+      "failure": null
     },
     {
       "schema_version": 1,
       "run_id": "amazon_polarity__ettin_encoder_150m",
       "dataset": "amazon_polarity",
       "model": "ettin_encoder_150m",
-      "status": "BLOCKED",
+      "status": "PENDING",
       "attempt": 0,
       "created_at": "2026-09-13T20:53:41.703574+00:00",
-      "updated_at": "2026-09-13T20:53:42.844069+00:00",
+      "updated_at": "2026-09-14T08:32:23.077948+00:00",
       "started_at": null,
       "completed_at": null,
       "last_checkpoint": null,
@@ -327,21 +285,17 @@
       "current_step": 0,
       "test_evaluation_attempts": 0,
       "oom_adjustments": [],
-      "failure": {
-        "classification": "gpu_availability_failure",
-        "message": "BLOCKED — GPU UNAVAILABLE: final training was not executed on local CPU.",
-        "recorded_at": "2026-09-13T20:53:42.844069+00:00"
-      }
+      "failure": null
     },
     {
       "schema_version": 1,
       "run_id": "amazon_polarity__neobert",
       "dataset": "amazon_polarity",
       "model": "neobert",
-      "status": "BLOCKED",
+      "status": "PENDING",
       "attempt": 0,
       "created_at": "2026-09-13T20:53:41.713349+00:00",
-      "updated_at": "2026-09-13T20:53:42.876160+00:00",
+      "updated_at": "2026-09-14T08:32:23.080144+00:00",
       "started_at": null,
       "completed_at": null,
       "last_checkpoint": null,
@@ -350,21 +304,17 @@
       "current_step": 0,
       "test_evaluation_attempts": 0,
       "oom_adjustments": [],
-      "failure": {
-        "classification": "gpu_availability_failure",
-        "message": "BLOCKED — GPU UNAVAILABLE: final training was not executed on local CPU.",
-        "recorded_at": "2026-09-13T20:53:42.864873+00:00"
-      }
+      "failure": null
     },
     {
       "schema_version": 1,
       "run_id": "amazon_polarity__mmbert_small",
       "dataset": "amazon_polarity",
       "model": "mmbert_small",
-      "status": "BLOCKED",
+      "status": "PENDING",
       "attempt": 0,
       "created_at": "2026-09-13T20:53:41.728001+00:00",
-      "updated_at": "2026-09-13T20:53:42.909084+00:00",
+      "updated_at": "2026-09-14T08:32:23.082429+00:00",
       "started_at": null,
       "completed_at": null,
       "last_checkpoint": null,
@@ -373,21 +323,17 @@
       "current_step": 0,
       "test_evaluation_attempts": 0,
       "oom_adjustments": [],
-      "failure": {
-        "classification": "gpu_availability_failure",
-        "message": "BLOCKED — GPU UNAVAILABLE: final training was not executed on local CPU.",
-        "recorded_at": "2026-09-13T20:53:42.909084+00:00"
-      }
+      "failure": null
     },
     {
       "schema_version": 1,
       "run_id": "amazon_polarity__gemma3_270m",
       "dataset": "amazon_polarity",
       "model": "gemma3_270m",
-      "status": "BLOCKED",
+      "status": "PENDING",
       "attempt": 0,
       "created_at": "2026-09-13T20:53:41.751248+00:00",
-      "updated_at": "2026-09-13T20:53:42.947672+00:00",
+      "updated_at": "2026-09-14T08:32:23.084784+00:00",
       "started_at": null,
       "completed_at": null,
       "last_checkpoint": null,
@@ -396,21 +342,17 @@
       "current_step": 0,
       "test_evaluation_attempts": 0,
       "oom_adjustments": [],
-      "failure": {
-        "classification": "gpu_availability_failure",
-        "message": "BLOCKED — GPU UNAVAILABLE: final training was not executed on local CPU.",
-        "recorded_at": "2026-09-13T20:53:42.947672+00:00"
-      }
+      "failure": null
     },
     {
       "schema_version": 1,
       "run_id": "amazon_polarity__qwen3_0_6b",
       "dataset": "amazon_polarity",
       "model": "qwen3_0_6b",
-      "status": "BLOCKED",
+      "status": "PENDING",
       "attempt": 0,
       "created_at": "2026-09-13T20:53:41.760297+00:00",
-      "updated_at": "2026-09-13T20:53:42.978896+00:00",
+      "updated_at": "2026-09-14T08:32:23.087129+00:00",
       "started_at": null,
       "completed_at": null,
       "last_checkpoint": null,
@@ -419,21 +361,17 @@
       "current_step": 0,
       "test_evaluation_attempts": 0,
       "oom_adjustments": [],
-      "failure": {
-        "classification": "gpu_availability_failure",
-        "message": "BLOCKED — GPU UNAVAILABLE: final training was not executed on local CPU.",
-        "recorded_at": "2026-09-13T20:53:42.977127+00:00"
-      }
+      "failure": null
     },
     {
       "schema_version": 1,
       "run_id": "yelp_polarity__eurobert_210m",
       "dataset": "yelp_polarity",
       "model": "eurobert_210m",
-      "status": "BLOCKED",
+      "status": "PENDING",
       "attempt": 0,
       "created_at": "2026-09-13T20:53:41.772972+00:00",
-      "updated_at": "2026-09-13T20:53:43.012286+00:00",
+      "updated_at": "2026-09-14T08:32:23.089365+00:00",
       "started_at": null,
       "completed_at": null,
       "last_checkpoint": null,
@@ -442,21 +380,17 @@
       "current_step": 0,
       "test_evaluation_attempts": 0,
       "oom_adjustments": [],
-      "failure": {
-        "classification": "gpu_availability_failure",
-        "message": "BLOCKED — GPU UNAVAILABLE: final training was not executed on local CPU.",
-        "recorded_at": "2026-09-13T20:53:43.009067+00:00"
-      }
+      "failure": null
     },
     {
       "schema_version": 1,
       "run_id": "yelp_polarity__ettin_encoder_150m",
       "dataset": "yelp_polarity",
       "model": "ettin_encoder_150m",
-      "status": "BLOCKED",
+      "status": "PENDING",
       "attempt": 0,
       "created_at": "2026-09-13T20:53:41.786774+00:00",
-      "updated_at": "2026-09-13T20:53:43.048993+00:00",
+      "updated_at": "2026-09-14T08:32:23.091528+00:00",
       "started_at": null,
       "completed_at": null,
       "last_checkpoint": null,
@@ -465,21 +399,17 @@
       "current_step": 0,
       "test_evaluation_attempts": 0,
       "oom_adjustments": [],
-      "failure": {
-        "classification": "gpu_availability_failure",
-        "message": "BLOCKED — GPU UNAVAILABLE: final training was not executed on local CPU.",
-        "recorded_at": "2026-09-13T20:53:43.048364+00:00"
-      }
+      "failure": null
     },
     {
       "schema_version": 1,
       "run_id": "yelp_polarity__neobert",
       "dataset": "yelp_polarity",
       "model": "neobert",
-      "status": "BLOCKED",
+      "status": "PENDING",
       "attempt": 0,
       "created_at": "2026-09-13T20:53:41.797250+00:00",
-      "updated_at": "2026-09-13T20:53:43.094420+00:00",
+      "updated_at": "2026-09-14T08:32:23.093735+00:00",
       "started_at": null,
       "completed_at": null,
       "last_checkpoint": null,
@@ -488,21 +418,17 @@
       "current_step": 0,
       "test_evaluation_attempts": 0,
       "oom_adjustments": [],
-      "failure": {
-        "classification": "gpu_availability_failure",
-        "message": "BLOCKED — GPU UNAVAILABLE: final training was not executed on local CPU.",
-        "recorded_at": "2026-09-13T20:53:43.091874+00:00"
-      }
+      "failure": null
     },
     {
       "schema_version": 1,
       "run_id": "yelp_polarity__mmbert_small",
       "dataset": "yelp_polarity",
       "model": "mmbert_small",
-      "status": "BLOCKED",
+      "status": "PENDING",
       "attempt": 0,
       "created_at": "2026-09-13T20:53:41.807674+00:00",
-      "updated_at": "2026-09-13T20:53:43.132941+00:00",
+      "updated_at": "2026-09-14T08:32:23.095928+00:00",
       "started_at": null,
       "completed_at": null,
       "last_checkpoint": null,
@@ -511,21 +437,17 @@
       "current_step": 0,
       "test_evaluation_attempts": 0,
       "oom_adjustments": [],
-      "failure": {
-        "classification": "gpu_availability_failure",
-        "message": "BLOCKED — GPU UNAVAILABLE: final training was not executed on local CPU.",
-        "recorded_at": "2026-09-13T20:53:43.132243+00:00"
-      }
+      "failure": null
     },
     {
       "schema_version": 1,
       "run_id": "yelp_polarity__gemma3_270m",
       "dataset": "yelp_polarity",
       "model": "gemma3_270m",
-      "status": "BLOCKED",
+      "status": "PENDING",
       "attempt": 0,
       "created_at": "2026-09-13T20:53:41.826128+00:00",
-      "updated_at": "2026-09-13T20:53:43.165884+00:00",
+      "updated_at": "2026-09-14T08:32:23.098189+00:00",
       "started_at": null,
       "completed_at": null,
       "last_checkpoint": null,
@@ -534,21 +456,17 @@
       "current_step": 0,
       "test_evaluation_attempts": 0,
       "oom_adjustments": [],
-      "failure": {
-        "classification": "gpu_availability_failure",
-        "message": "BLOCKED — GPU UNAVAILABLE: final training was not executed on local CPU.",
-        "recorded_at": "2026-09-13T20:53:43.165884+00:00"
-      }
+      "failure": null
     },
     {
       "schema_version": 1,
       "run_id": "yelp_polarity__qwen3_0_6b",
       "dataset": "yelp_polarity",
       "model": "qwen3_0_6b",
-      "status": "BLOCKED",
+      "status": "PENDING",
       "attempt": 0,
       "created_at": "2026-09-13T20:53:41.845039+00:00",
-      "updated_at": "2026-09-13T20:53:43.208756+00:00",
+      "updated_at": "2026-09-14T08:32:23.100517+00:00",
       "started_at": null,
       "completed_at": null,
       "last_checkpoint": null,
@@ -557,11 +475,7 @@
       "current_step": 0,
       "test_evaluation_attempts": 0,
       "oom_adjustments": [],
-      "failure": {
-        "classification": "gpu_availability_failure",
-        "message": "BLOCKED — GPU UNAVAILABLE: final training was not executed on local CPU.",
-        "recorded_at": "2026-09-13T20:53:43.197018+00:00"
-      }
+      "failure": null
     }
   ]
 }

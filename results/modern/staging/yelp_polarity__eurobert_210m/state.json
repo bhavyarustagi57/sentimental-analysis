@@ -3,10 +3,10 @@
   "run_id": "yelp_polarity__eurobert_210m",
   "dataset": "yelp_polarity",
   "model": "eurobert_210m",
-  "status": "BLOCKED",
+  "status": "PENDING",
   "attempt": 0,
   "created_at": "2026-09-13T20:53:41.772972+00:00",
-  "updated_at": "2026-09-13T20:53:43.012286+00:00",
+  "updated_at": "2026-09-14T08:32:23.089365+00:00",
   "started_at": null,
   "completed_at": null,
   "last_checkpoint": null,
@@ -15,9 +15,5 @@
   "current_step": 0,
   "test_evaluation_attempts": 0,
   "oom_adjustments": [],
-  "failure": {
-    "classification": "gpu_availability_failure",
-    "message": "BLOCKED — GPU UNAVAILABLE: final training was not executed on local CPU.",
-    "recorded_at": "2026-09-13T20:53:43.009067+00:00"
-  }
+  "failure": null
 }

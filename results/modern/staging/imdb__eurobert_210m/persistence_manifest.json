@@ -1,0 +1,9 @@
+{
+  "repo_id": "BHAVYARUSTAGI/sentiment-phase4-artifacts",
+  "repo_type": "model",
+  "path_in_repo": "phase4/imdb__eurobert_210m",
+  "commit": "723ac2f03e80a814e710aa42ee69991f408ad68e",
+  "verified": true,
+  "verified_file_count": 10,
+  "persisted_at": "2026-09-14T08:38:48.542341+00:00"
+}

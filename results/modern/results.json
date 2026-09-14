@@ -1,0 +1,129 @@
+[
+  {
+    "schema_version": 1,
+    "dataset": "imdb",
+    "model": "eurobert_210m",
+    "status": "COMPLETED",
+    "accuracy": 0.9195,
+    "precision": 0.9197623514696686,
+    "recall": 0.9195,
+    "f1_score": 0.9194874199093608,
+    "validation_f1": 0.9262406648341431,
+    "validation_accuracy": 0.92625,
+    "validation_loss": 0.2272885977104306,
+    "training_time_seconds": 1747.5398807849992,
+    "inference_time_seconds": 55.102726686000096,
+    "examples_per_second": 36.29584451232135,
+    "average_latency_seconds": 0.027551363343000047,
+    "trainable_parameters": 212358146,
+    "total_parameters": 212358146,
+    "adaptation_mode": "full_fine_tuning",
+    "training_configuration": {
+      "optimizer": "AdamW",
+      "learning_rate": 2e-05,
+      "weight_decay": 0.01,
+      "scheduler": "linear",
+      "warmup_ratio": 0.1,
+      "maximum_epochs": 3,
+      "early_stopping_patience": 1,
+      "physical_batch_size": 8,
+      "gradient_accumulation_steps": 4,
+      "effective_batch_size": 32
+    },
+    "final_epoch": 3,
+    "final_step": 675,
+    "device": "cuda",
+    "device_name": "Tesla T4",
+    "numeric_precision": "bf16",
+    "checkpoint_identifier": "/content/sentimental-analysis-modern/results/modern/staging/imdb__eurobert_210m/checkpoints/best/model",
+    "model_id": "EuroBERT/EuroBERT-210m",
+    "model_revision": "39b51e15dd1f1a06f58b5cbf6a8a188cec60bd0e",
+    "tokenizer_revision": "39b51e15dd1f1a06f58b5cbf6a8a188cec60bd0e",
+    "split_manifest_hash": "fba6491bca30fa9dcf2a8c48a9d945b3d7042f98f5d61e3415e24664022cb327",
+    "dataset_fingerprint": "bac68957db7dc7845037a3228d3e081fe386ab8111f701693b3399c0b0964c3e",
+    "preprocessing_version": "1.0",
+    "seed": 42,
+    "labels": {
+      "0": "negative",
+      "1": "positive"
+    },
+    "max_sequence_length": 256,
+    "truncation_rate": {
+      "train": 0.3498611111111111,
+      "validation": 0.32875,
+      "test": 0.3415
+    },
+    "prediction_count": 2000,
+    "prediction_sha256": "e4f56edde5d8530f2c191b2fd9e11e1e450077f232b41da9634df47f337cb053",
+    "checkpoint_reload_verified": true,
+    "training_history": [
+      {
+        "epoch": 1,
+        "global_step": 225,
+        "mean_training_loss": 0.37544662520289424,
+        "validation": {
+          "accuracy": 0.91,
+          "precision": 0.9120188925736108,
+          "recall": 0.91,
+          "f1_score": 0.909889614778103,
+          "loss": 0.24636327438987793
+        }
+      },
+      {
+        "epoch": 2,
+        "global_step": 450,
+        "mean_training_loss": 0.14539802353311743,
+        "validation": {
+          "accuracy": 0.92125,
+          "precision": 0.9224142793574791,
+          "recall": 0.92125,
+          "f1_score": 0.921195698911281,
+          "loss": 0.2208823759481311
+        }
+      },
+      {
+        "epoch": 3,
+        "global_step": 675,
+        "mean_training_loss": 0.07193967912397865,
+        "validation": {
+          "accuracy": 0.92625,
+          "precision": 0.9264658983610452,
+          "recall": 0.92625,
+          "f1_score": 0.9262406648341431,
+          "loss": 0.2272885977104306
+        }
+      }
+    ],
+    "oom_adjustments": [],
+    "hardware": {
+      "python": "3.13.15",
+      "torch": "2.11.0+cu128",
+      "transformers": "5.16.1",
+      "accelerate": "1.14.0",
+      "peft": "0.20.0",
+      "safetensors": "0.8.0",
+      "huggingface_hub": "1.29.0",
+      "tokenizers": "0.23.1",
+      "device_type": "cuda",
+      "device_name": "Tesla T4",
+      "cuda_available": true,
+      "bf16_supported": true,
+      "precision": "bf16",
+      "torch_version": "2.11.0+cu128",
+      "cuda_version": "12.8",
+      "gpu_total_memory_bytes": 15637086208
+    },
+    "training_timing_definition": "Cumulative synchronized model compute from the first training forward pass through each epoch validation pass; excludes model/tokenizer download, tokenization, and checkpoint I/O.",
+    "inference_timing_definition": "Synchronized clean-reload evaluation loop over all 2,000 pre-tokenized test examples; includes batch collation/device transfer/model forward, excludes checkpoint reload and tokenization.",
+    "completed_at": "2026-09-14T07:43:18.398709+00:00",
+    "checkpoint_persistence": {
+      "repo_id": "BHAVYARUSTAGI/sentiment-phase4-artifacts",
+      "repo_type": "model",
+      "path_in_repo": "phase4/imdb__eurobert_210m",
+      "commit": "723ac2f03e80a814e710aa42ee69991f408ad68e",
+      "verified": true,
+      "verified_file_count": 10,
+      "persisted_at": "2026-09-14T08:38:48.542341+00:00"
+    }
+  }
+]
