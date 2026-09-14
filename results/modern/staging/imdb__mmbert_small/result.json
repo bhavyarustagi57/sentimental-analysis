@@ -1,0 +1,118 @@
+{
+  "schema_version": 1,
+  "dataset": "imdb",
+  "model": "mmbert_small",
+  "status": "COMPLETED",
+  "accuracy": 0.8065,
+  "precision": 0.8065518072554262,
+  "recall": 0.8065,
+  "f1_score": 0.8064918242795759,
+  "validation_f1": 0.7736704310109023,
+  "validation_accuracy": 0.77375,
+  "validation_loss": 0.4389280033111572,
+  "training_time_seconds": 854.899884350998,
+  "inference_time_seconds": 28.202288070999202,
+  "examples_per_second": 70.91623186618774,
+  "average_latency_seconds": 0.014101144035499601,
+  "trainable_parameters": 140642306,
+  "total_parameters": 140642306,
+  "adaptation_mode": "full_fine_tuning",
+  "training_configuration": {
+    "optimizer": "AdamW",
+    "learning_rate": 2e-05,
+    "weight_decay": 0.01,
+    "scheduler": "linear",
+    "warmup_ratio": 0.1,
+    "maximum_epochs": 3,
+    "early_stopping_patience": 1,
+    "physical_batch_size": 16,
+    "gradient_accumulation_steps": 2,
+    "effective_batch_size": 32
+  },
+  "final_epoch": 3,
+  "final_step": 675,
+  "device": "cuda",
+  "device_name": "Tesla T4",
+  "numeric_precision": "bf16",
+  "checkpoint_identifier": "/content/sentimental-analysis-modern/results/modern/staging/imdb__mmbert_small/checkpoints/best/model",
+  "model_id": "jhu-clsp/mmBERT-small",
+  "model_revision": "abc32620dd4f6ab06f5fbe905dc25f310618e09f",
+  "tokenizer_revision": "abc32620dd4f6ab06f5fbe905dc25f310618e09f",
+  "split_manifest_hash": "fba6491bca30fa9dcf2a8c48a9d945b3d7042f98f5d61e3415e24664022cb327",
+  "dataset_fingerprint": "bac68957db7dc7845037a3228d3e081fe386ab8111f701693b3399c0b0964c3e",
+  "preprocessing_version": "1.0",
+  "seed": 42,
+  "labels": {
+    "0": "negative",
+    "1": "positive"
+  },
+  "max_sequence_length": 256,
+  "truncation_rate": {
+    "train": 0.3506944444444444,
+    "validation": 0.33375,
+    "test": 0.3425
+  },
+  "prediction_count": 2000,
+  "prediction_sha256": "9cf9292e79c060619ab0d5e017482ebedd7ad65376ec7350820cbc4599dd58ac",
+  "checkpoint_reload_verified": true,
+  "training_history": [
+    {
+      "epoch": 1,
+      "global_step": 225,
+      "mean_training_loss": 0.8540215418073867,
+      "validation": {
+        "accuracy": 0.71125,
+        "precision": 0.711251320320752,
+        "recall": 0.71125,
+        "f1_score": 0.71124954882742,
+        "loss": 0.5494114685058594
+      }
+    },
+    {
+      "epoch": 2,
+      "global_step": 450,
+      "mean_training_loss": 0.475258809460534,
+      "validation": {
+        "accuracy": 0.765,
+        "precision": 0.7654246794871794,
+        "recall": 0.765,
+        "f1_score": 0.764905962384954,
+        "loss": 0.4529022979736328
+      }
+    },
+    {
+      "epoch": 3,
+      "global_step": 675,
+      "mean_training_loss": 0.4222222595744663,
+      "validation": {
+        "accuracy": 0.77375,
+        "precision": 0.7741355030511657,
+        "recall": 0.77375,
+        "f1_score": 0.7736704310109023,
+        "loss": 0.4389280033111572
+      }
+    }
+  ],
+  "oom_adjustments": [],
+  "hardware": {
+    "python": "3.13.15",
+    "torch": "2.11.0+cu128",
+    "transformers": "5.16.1",
+    "accelerate": "1.14.0",
+    "peft": "0.20.0",
+    "safetensors": "0.8.0",
+    "huggingface_hub": "1.29.0",
+    "tokenizers": "0.23.1",
+    "device_type": "cuda",
+    "device_name": "Tesla T4",
+    "cuda_available": true,
+    "bf16_supported": true,
+    "precision": "bf16",
+    "torch_version": "2.11.0+cu128",
+    "cuda_version": "12.8",
+    "gpu_total_memory_bytes": 15637086208
+  },
+  "training_timing_definition": "Cumulative synchronized model compute from the first training forward pass through each epoch validation pass; excludes model/tokenizer download, tokenization, and checkpoint I/O.",
+  "inference_timing_definition": "Synchronized clean-reload evaluation loop over all 2,000 pre-tokenized test examples; includes batch collation/device transfer/model forward, excludes checkpoint reload and tokenization.",
+  "completed_at": "2026-09-14T09:53:21.110667+00:00"
+}

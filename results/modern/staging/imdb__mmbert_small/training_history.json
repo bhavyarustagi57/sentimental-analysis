@@ -1,0 +1,38 @@
+[
+  {
+    "epoch": 1,
+    "global_step": 225,
+    "mean_training_loss": 0.8540215418073867,
+    "validation": {
+      "accuracy": 0.71125,
+      "precision": 0.711251320320752,
+      "recall": 0.71125,
+      "f1_score": 0.71124954882742,
+      "loss": 0.5494114685058594
+    }
+  },
+  {
+    "epoch": 2,
+    "global_step": 450,
+    "mean_training_loss": 0.475258809460534,
+    "validation": {
+      "accuracy": 0.765,
+      "precision": 0.7654246794871794,
+      "recall": 0.765,
+      "f1_score": 0.764905962384954,
+      "loss": 0.4529022979736328
+    }
+  },
+  {
+    "epoch": 3,
+    "global_step": 675,
+    "mean_training_loss": 0.4222222595744663,
+    "validation": {
+      "accuracy": 0.77375,
+      "precision": 0.7741355030511657,
+      "recall": 0.77375,
+      "f1_score": 0.7736704310109023,
+      "loss": 0.4389280033111572
+    }
+  }
+]
