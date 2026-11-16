@@ -20,6 +20,12 @@ Six classical ML classifiers (Logistic Regression, Naive Bayes, Linear SVM, Rand
 |---|---|
 | ![Method pipeline](screenshots/05-method-pipeline-findings.png) | ![Mobile](screenshots/08-mobile.png) |
 
+## Documentation
+
+- [docs/PRD.md](docs/PRD.md) — goals, scope, and requirements.
+- [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) — how the backend, frontend, and ML pipeline fit together.
+- [docs/DOCUMENTATION.md](docs/DOCUMENTATION.md) — index of every doc in this repo.
+
 ## Quick start
 
 Requires **Python 3.12** and **Node.js 20+** (pinned pandas/scikit-learn and Vite need these).
@@ -137,7 +143,7 @@ The product report calls `openai/gpt-oss-120b` (heavy) and `openai/gpt-oss-20b` 
 
 ## Submission ZIP checklist
 
-Include the source files, `requirements.txt`, `package.json`, `package-lock.json`, `settings.json`, `.env.example`, `docs/`, `results/`, `datasets/manifest.json`, all four files in `datasets/processed/`, all 24 `models/*.joblib` files plus `models/README.md`, and `screenshots/`. These prepared datasets and artifacts are required to view the frozen evidence and make predictions without retraining.
+Include the source files, `requirements.txt`, `package.json`, `package-lock.json`, `settings.json`, `.env.example`, `docs/`, `results/`, `datasets/manifest.json`, all four files in `datasets/processed/`, all 24 `models/*.joblib` files plus `models/README.md`, `screenshots/`, `PRODUCT.md`, `DESIGN.md`, and `viva-prep/`. These prepared datasets and artifacts are required to view the frozen evidence and make predictions without retraining. Full detail: [docs/SUBMISSION_CHECKLIST.md](docs/SUBMISSION_CHECKLIST.md).
 
 Do **not** include `.env`, `.venv/`, `node_modules/`, `dist/`, `runtime/`, caches, `datasets/raw/`, or `models/smoke/` (Phase 4 transformer checkpoints). A Groq key is optional; it enables only the separate product-analysis feature, not the academic dashboard or prediction endpoint.
 
