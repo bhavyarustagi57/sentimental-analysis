@@ -1,11 +1,12 @@
 import json
 import time
 
+import groq
 from groq import Groq
 from pydantic import BaseModel, ValidationError, field_validator, Field
 from typing import Optional
 
-from rate_limiter import groq_rate_limiter
+from rate_limiter import groq_rate_limiter, model_extras
 from templates import PROMPTS
 
 
@@ -129,10 +130,31 @@ class LuminaPayload(BaseModel):
 
 # ─── Prompt Assembly ──────────────────────────────────────────────────────────
 
+def _select_for_prompt(sentiment_data: list[dict], settings: dict, shrink: float = 1.0) -> list[dict]:
+    """
+    Pick a bounded, balanced sample of tagged posts for the LLM prompt.
+
+    Statistics (VADER) are computed on ALL posts; the LLM only needs a sample.
+    Sending everything easily exceeds Groq's free-tier tokens-per-minute limit.
+    """
+    target_cap = max(4, int(settings.get("synthesis_posts_target", 30) * shrink))
+    comp_cap = max(3, int(settings.get("synthesis_posts_per_competitor", 12) * shrink))
+    taken: dict[str, int] = {}
+    selected: list[dict] = []
+    for item in sentiment_data:
+        cap = comp_cap if item["is_competitor"] else target_cap
+        if taken.get(item["product"], 0) >= cap:
+            continue
+        taken[item["product"]] = taken.get(item["product"], 0) + 1
+        selected.append(item)
+    return selected
+
+
 def _build_synthesis_prompt(
     sentiment_data: list[dict],
     product_name: str,
     settings: dict,
+    shrink: float = 1.0,
 ) -> str:
     """
     Assemble the full JSON synthesis prompt by injecting runtime values
@@ -140,19 +162,15 @@ def _build_synthesis_prompt(
     """
     colors = settings["design_colors"]
     cluster_labels = ", ".join(settings["community_clusters"])
+    max_chars = max(80, int(settings.get("synthesis_chars_per_post", 180) * shrink))
 
-    # Build a compact, token-efficient sentiment summary
-    # Format: [PRODUCT | TARGET/COMPETITOR | SENTIMENT]: text (max 200 chars)
+    # Compact summary line: [PRODUCT | TARGET/COMPETITOR | SENTIMENT]: text
     summary_lines: list[str] = []
-    for item in sentiment_data:
+    for item in _select_for_prompt(sentiment_data, settings, shrink):
         role = "COMPETITOR" if item["is_competitor"] else "TARGET"
-        line = (
-            f"[{item['product']} | {role} | {item['sentiment']}]: "
-            f"{item['text'][:200]}"
+        summary_lines.append(
+            f"[{item['product']} | {role} | {item['sentiment']}]: {item['text'][:max_chars]}"
         )
-        summary_lines.append(line)
-
-    sentiment_text = "\n".join(summary_lines)
 
     return PROMPTS["json_payload_construction"]["template"].format(
         product_name=product_name,
@@ -161,9 +179,27 @@ def _build_synthesis_prompt(
         color_negative=colors["negative"],
         color_neutral=colors["neutral"],
         cluster_labels=cluster_labels,
-        sentiment_data=sentiment_text,
+        sentiment_data="\n".join(summary_lines),
     )
 
+
+class SynthesisError(RuntimeError):
+    """Raised with a user-readable message when the Groq report cannot be produced."""
+
+
+def friendly_groq_error(exc: Exception) -> str:
+    """Translate Groq/network exceptions into one clear sentence for the UI."""
+    if isinstance(exc, (groq.AuthenticationError, groq.PermissionDeniedError)):
+        return ("Groq rejected the API key. Check GROQ_API_KEY in .env (it should start with 'gsk_') and try again.")
+    if isinstance(exc, groq.NotFoundError):
+        return ("The configured Groq model was not found. Check model_heavy / model_light in settings.json.")
+    if isinstance(exc, groq.RateLimitError):
+        return ("Groq's free-tier rate limit was reached. Wait about a minute and try again.")
+    if isinstance(exc, (groq.APIConnectionError, groq.APITimeoutError)):
+        return "Could not reach Groq. Check your internet connection and try again."
+    if isinstance(exc, groq.APIStatusError):
+        return f"Groq returned an error (HTTP {exc.status_code}). Try again in a moment."
+    return str(exc) or type(exc).__name__
 
 
 def _call_groq_heavy(
@@ -188,6 +224,7 @@ def _call_groq_heavy(
         ],
         max_tokens=token_limit,
         temperature=0.4,
+        **model_extras(model_heavy),
     )
     return response.choices[0].message.content.strip()
 
@@ -211,57 +248,70 @@ def synthesize(
     settings: dict,
     groq_client: Groq,
 ) -> LuminaPayload:
-    
+
     model_heavy: str = settings["model_heavy"]
     token_limit: int = settings["token_limit_heavy"]
     sleep_seconds: int = settings["rate_limit_sleep_seconds"]
+    max_attempts = 3
 
-    prompt = _build_synthesis_prompt(sentiment_data, product_name, settings)
+    shrink = 1.0
+    extra_instructions = ""
+    last_problem = "unknown error"
 
-    for attempt in range(1, 3):
-        print(
-            f"[json_synthesizer] ⚡ Synthesis attempt {attempt}/2 "
-            f"using '{model_heavy}' ({len(sentiment_data)} tagged posts)..."
-        )
+    for attempt in range(1, max_attempts + 1):
+        prompt = _build_synthesis_prompt(sentiment_data, product_name, settings, shrink) + extra_instructions
+        print(f"[json_synthesizer] Synthesis attempt {attempt}/{max_attempts} using '{model_heavy}'...")
         try:
             raw = _call_groq_heavy(prompt, groq_client, model_heavy, token_limit)
             _sleep(sleep_seconds)
-
-            cleaned = _strip_markdown_fences(raw)
-
-            parsed = json.loads(cleaned)
-
+            parsed = json.loads(_strip_markdown_fences(raw))
             payload = LuminaPayload(**parsed)
-
-            print(
-                f"[json_synthesizer] ✅ Payload validated successfully on attempt {attempt}. "
-                f"Overall score: {payload.overallScore}/10"
-            )
+            print(f"[json_synthesizer] Payload validated on attempt {attempt}. Score: {payload.overallScore}/10")
             return payload
 
+        except (groq.AuthenticationError, groq.PermissionDeniedError, groq.NotFoundError) as e:
+            # Retrying cannot fix a bad key or a missing model.
+            raise SynthesisError(friendly_groq_error(e)) from e
+
+        except groq.RateLimitError as e:
+            last_problem = friendly_groq_error(e)
+            print(f"[json_synthesizer] Rate limited (attempt {attempt}); waiting then sending a smaller prompt.")
+            shrink *= 0.5
+            if attempt < max_attempts:
+                _sleep(25)
+
+        except groq.APIStatusError as e:
+            last_problem = friendly_groq_error(e)
+            if e.status_code == 413:  # request too large for the model's token limit
+                shrink *= 0.5
+            print(f"[json_synthesizer] Groq error {e.status_code} (attempt {attempt}).")
+            if attempt < max_attempts:
+                _sleep(sleep_seconds)
+
+        except (groq.APIConnectionError, groq.APITimeoutError) as e:
+            last_problem = friendly_groq_error(e)
+            if attempt < max_attempts:
+                _sleep(sleep_seconds)
+
         except json.JSONDecodeError as e:
-            print(f"[json_synthesizer] ❌ Attempt {attempt} — JSON parse error: {e}")
-            if attempt == 1:
-                prompt += (
-                    f"\n\n⚠️ PREVIOUS ATTEMPT FAILED — JSON PARSE ERROR:\n{str(e)[:400]}\n"
-                    "Fix the JSON syntax and output ONLY valid, parseable JSON."
-                )
+            last_problem = "Groq returned text that was not valid JSON."
+            print(f"[json_synthesizer] Attempt {attempt}: JSON parse error: {e}")
+            extra_instructions = (
+                f"\n\nPREVIOUS ATTEMPT FAILED - JSON PARSE ERROR:\n{str(e)[:300]}\n"
+                "Fix the JSON syntax and output ONLY valid, parseable JSON."
+            )
+            shrink *= 0.8  # a shorter prompt leaves more room for the JSON answer
+            if attempt < max_attempts:
                 _sleep(sleep_seconds)
 
         except ValidationError as e:
-            print(f"[json_synthesizer] ❌ Attempt {attempt} — Pydantic validation error:\n{e}")
-            if attempt == 1:
-                prompt += (
-                    f"\n\n⚠️ PREVIOUS ATTEMPT FAILED — SCHEMA VALIDATION ERROR:\n{str(e)[:400]}\n"
-                    "Ensure ALL required fields are present with the correct types."
-                )
+            last_problem = "Groq's report was missing required fields."
+            print(f"[json_synthesizer] Attempt {attempt}: schema validation error:\n{e}")
+            extra_instructions = (
+                f"\n\nPREVIOUS ATTEMPT FAILED - SCHEMA VALIDATION ERROR:\n{str(e)[:300]}\n"
+                "Ensure ALL required fields are present with the correct types."
+            )
+            if attempt < max_attempts:
                 _sleep(sleep_seconds)
 
-        except Exception as e:
-            print(f"[json_synthesizer] ❌ Attempt {attempt} — Unexpected error: {e}")
-            _sleep(sleep_seconds)
-
-    raise ValueError(
-        f"[json_synthesizer] Both synthesis attempts failed for '{product_name}'. "
-        "Check Groq API key, model availability, and prompt integrity."
-    )
+    raise SynthesisError(f"Could not generate the report after {max_attempts} attempts: {last_problem}")

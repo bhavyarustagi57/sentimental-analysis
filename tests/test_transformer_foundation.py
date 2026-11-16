@@ -277,7 +277,7 @@ def test_adapter_contract_and_inference_compatibility_response() -> None:
 
 
 def test_huggingface_adapter_predict_converts_bfloat16_logits_to_float32_numpy() -> None:
-    import torch
+    torch = pytest.importorskip("torch")  # optional dep (requirements-transformers.txt)
 
     class BFloatTokenizer(_FakeTokenizer):
         def pad(self, encodings: Mapping[str, Any], **_: Any) -> Mapping[str, Any]:

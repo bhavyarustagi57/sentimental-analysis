@@ -47,7 +47,7 @@ import httpx
 import nltk
 from groq import Groq
 
-from rate_limiter import groq_rate_limiter
+from rate_limiter import groq_rate_limiter, model_extras
 from templates import PROMPTS
 
 
@@ -103,6 +103,36 @@ _MAX_RETRY_SLEEP = 5
 _REDDIT_SEARCH_URL    = "https://www.reddit.com/search.json"
 _REDDIT_DEFAULT_SLEEP = 2   # seconds between product fetches
 _HTTP_TIMEOUT         = 15  # seconds
+
+
+class RedditUnavailableError(RuntimeError):
+    """Reddit refused or could not be reached (blocked IP, rate limit, network)."""
+
+
+def _reddit_error_message(status, detail=""):
+    if status in (401, 403):
+        return ("Reddit blocked the request (HTTP %s). Reddit often blocks automated "
+                "requests from some networks. Please use the file-upload option instead." % status)
+    if status == 429:
+        return ("Reddit is rate-limiting this connection (HTTP 429). Wait a few minutes and "
+                "try again, or use the file-upload option.")
+    if status:
+        return f"Reddit returned HTTP {status}. Try again later or use the file-upload option."
+    return (f"Could not reach Reddit ({detail or 'network error'}). Check your internet "
+            "connection or use the file-upload option.")
+
+
+def _reddit_get(client, params, user_agent):
+    """GET the Reddit search endpoint, retrying briefly on 429 / 5xx."""
+    response = None
+    for attempt in range(3):
+        response = client.get(_REDDIT_SEARCH_URL, headers=_make_headers(user_agent), params=params)
+        if (response.status_code == 429 or response.status_code >= 500) and attempt < 2:
+            time.sleep(4 * (attempt + 1))
+            continue
+        break
+    response.raise_for_status()
+    return response
 
 
 # ─── NLP Quality Gate ─────────────────────────────────────────────────────────
@@ -282,7 +312,7 @@ def _fetch_reddit_posts(
     limit: int,
     user_agent: str,
     sort: str = "new",
-    time_filter: str = "month",
+    time_filter: str = "year",
 ) -> list[dict]:
     """
     Search Reddit's public JSON API for `query`.
@@ -329,12 +359,7 @@ def _fetch_reddit_posts(
                 if after:
                     params["after"] = after
 
-                response = client.get(
-                    _REDDIT_SEARCH_URL,
-                    headers=_make_headers(user_agent),
-                    params=params,
-                )
-                response.raise_for_status()
+                response = _reddit_get(client, params, user_agent)
                 data = response.json()
 
                 children = data.get("data", {}).get("children", [])
@@ -398,14 +423,20 @@ def _fetch_reddit_posts(
         )
 
     except httpx.HTTPStatusError as e:
-        print(
-            f"[reddit_scraper] ⚠️  HTTP {e.response.status_code} for '{query}': "
-            f"{e.response.text[:200]}"
-        )
+        print(f"[reddit_scraper] HTTP {e.response.status_code} for '{query}'.")
+        if not posts:
+            raise RedditUnavailableError(_reddit_error_message(e.response.status_code)) from e
     except httpx.RequestError as e:
-        print(f"[reddit_scraper] ⚠️  Network error for '{query}': {e}")
+        print(f"[reddit_scraper] Network error for '{query}': {e}")
+        if not posts:
+            raise RedditUnavailableError(_reddit_error_message(None, type(e).__name__)) from e
     except (KeyError, ValueError) as e:
-        print(f"[reddit_scraper] ⚠️  JSON parse error for '{query}': {e}")
+        print(f"[reddit_scraper] JSON parse error for '{query}': {e}")
+        if not posts:
+            raise RedditUnavailableError(
+                "Reddit returned an unreadable response (it may be blocking this connection). "
+                "Please use the file-upload option instead."
+            ) from e
 
     return posts
 
@@ -435,8 +466,9 @@ def _discover_competitors(
         response = groq_client.chat.completions.create(
             model=model_light,
             messages=[{"role": "user", "content": prompt}],
-            max_tokens=256,
+            max_tokens=1024,
             temperature=0.3,
+            **model_extras(model_light),
         )
         raw = response.choices[0].message.content.strip()
 
@@ -464,52 +496,65 @@ def _discover_competitors(
 
 # ─── Public API ───────────────────────────────────────────────────────────────
 
-def scrape(product_name: str, settings: dict, groq_client: Groq) -> dict:
+def _collect_posts(query, wanted, user_agent, progress=None, label=""):
+    """
+    Collect up to `wanted` unique quality posts for `query`.
+
+    Makes at most 3 attempts and stops as soon as an attempt adds no new unique
+    post (the old loop could spin forever when fewer than `wanted` posts exist).
+    Raises RedditUnavailableError if Reddit is unreachable/blocked.
+    """
+    collected = []
+    seen = set()
+    for _attempt in range(3):
+        if progress:
+            progress(f"Collecting Reddit posts for {label or query} ({len(collected)}/{wanted})...")
+        batch = _fetch_reddit_posts(
+            query=query, product_name=query, limit=wanted * 4, user_agent=user_agent,
+        )
+        added = 0
+        for post in batch:
+            if post["text"] not in seen:
+                seen.add(post["text"])
+                collected.append(post)
+                added += 1
+        if len(collected) >= wanted or added == 0:
+            break
+        time.sleep(random.uniform(_MIN_RETRY_SLEEP, _MAX_RETRY_SLEEP))
+    return collected[:wanted]
+
+
+def scrape(product_name: str, settings: dict, groq_client: Groq, progress=None) -> dict:
     """
     Full Reddit ingestion pipeline for a target product and its competitors.
 
-    Uses Reddit's public JSON API via httpx — no PRAW or OAuth credentials.
-    Every post passes four quality gates:
-      1. selftext-only policy
-      2. Exact product-name token-sequence match
-      3. Token length ≤ _MAX_TOKENS  (reference: ~140-token sample post)
-      4. NLP cleaning gate
-
-    If quality filtering yields fewer posts than posts_per_product, the scraper
-    retries automatically with a random 2–5 second sleep between attempts until
-    the required count is reached or Reddit has no more results.
-
-    Pipeline:
-        Step 0: LLM identifies competitor names.
-        Step 1: Retry loop — scrape main product until posts_per_product posts.
-        Step 2: Retry loop — scrape each competitor until posts_per_product posts.
+    Uses Reddit's public JSON API via httpx (no OAuth). Every post passes the
+    quality gates described in the module docstring.
 
     Args:
         product_name: The main product/brand to analyze (e.g. "iPhone 17").
         settings:     Loaded settings.json dict.
         groq_client:  Initialized Groq SDK client instance.
+        progress:     Optional callable(str) used to report live progress.
+
+    Raises:
+        RedditUnavailableError: Reddit blocked / could not be reached for the target.
+        RuntimeError: Reddit worked but no usable posts mention the product.
 
     Returns:
-        {
-            "target":      {"name": str, "posts": [{"text": str, "utc": float}, ...]},
-            "competitors": {"CompetitorName": {"posts": [...]}, ...}
-        }
+        {"target": {"name": str, "posts": [...]}, "competitors": {name: {"posts": [...]}}}
     """
-    posts_per_product: int = settings["posts_per_product"]
-    max_competitors: int   = settings["max_competitors"]
-    user_agent: str        = settings.get(
-        "reddit_user_agent",
-        "lumina-backend/1.0 (college project)"
-    )
-    reddit_sleep: int = settings.get("reddit_sleep_seconds", _REDDIT_DEFAULT_SLEEP)
+    posts_per_product = settings["posts_per_product"]
+    max_competitors = settings["max_competitors"]
+    user_agent = settings.get("reddit_user_agent", "lumina-backend/1.0 (college project)")
+    reddit_sleep = settings.get("reddit_sleep_seconds", _REDDIT_DEFAULT_SLEEP)
 
-    print(
-        f"[reddit_scraper] 🔌 Smart Reddit scraper active. "
-        f"Filters: exact product-name match + ≤{_MAX_TOKENS} tokens + NLP gate. "
-        f"Stopwords: {len(_STOP_WORDS)} loaded."
-    )
+    def say(message):
+        print(f"[reddit_scraper] {message}")
+        if progress:
+            progress(message)
 
-    # ── STEP 0: Competitor Discovery ──────────────────────────────────────────
+    say(f"Discovering competitors for '{product_name}'...")
     competitors = _discover_competitors(
         product_name=product_name,
         max_competitors=max_competitors,
@@ -517,115 +562,31 @@ def scrape(product_name: str, settings: dict, groq_client: Groq) -> dict:
         model_light=settings["model_light"],
     )
 
-    # ── STEP 1: Scrape Main Product (retry loop) ──────────────────────────────
-    print(
-        f"[reddit_scraper] 📥 Step 1: Collecting {posts_per_product} quality posts "
-        f"for '{product_name}' (exact match + ≤{_MAX_TOKENS} tokens)..."
-    )
-    target_posts: list[dict] = []
-    seen_texts: set[str]     = set()
-    attempt = 0
-
-    while len(target_posts) < posts_per_product:
-        attempt += 1
-        batch = _fetch_reddit_posts(
-            query=product_name,
-            product_name=product_name,
-            limit=posts_per_product * 4,   # request 4× to compensate for strict filters
-            user_agent=user_agent,
+    target_posts = _collect_posts(product_name, posts_per_product, user_agent, progress, f"'{product_name}'")
+    say(f"Target '{product_name}': {len(target_posts)}/{posts_per_product} posts collected.")
+    if not target_posts:
+        raise RuntimeError(
+            f"Reddit worked, but no usable posts mention '{product_name}'. Try a more common product "
+            "name (for example 'iPhone 15') or use the file-upload option."
         )
-
-        for p in batch:
-            if p["text"] not in seen_texts:
-                target_posts.append(p)
-                seen_texts.add(p["text"])
-
-        if len(target_posts) >= posts_per_product:
-            break
-
-        if not batch:
-            print(
-                f"[reddit_scraper] ⚠️  No more Reddit results for '{product_name}'. "
-                f"Proceeding with {len(target_posts)} posts."
-            )
-            break
-
-        sleep_sec = random.uniform(_MIN_RETRY_SLEEP, _MAX_RETRY_SLEEP)
-        print(
-            f"[reddit_scraper] 🔄 Attempt {attempt}: {len(target_posts)}/{posts_per_product} "
-            f"posts collected. Retrying in {sleep_sec:.1f}s..."
-        )
-        time.sleep(sleep_sec)
-
-    target_posts = target_posts[:posts_per_product]
-    print(
-        f"[reddit_scraper] ✅ Target '{product_name}': "
-        f"{len(target_posts)}/{posts_per_product} posts collected."
-    )
     _reddit_sleep(reddit_sleep, label=f"after '{product_name}' fetch")
 
-    # ── STEP 2: Scrape Each Competitor (retry loop) ───────────────────────────
-    competitor_data: dict = {}
+    competitor_data = {}
     for idx, comp_name in enumerate(competitors, start=1):
-        print(
-            f"[reddit_scraper] 📥 Step 2.{idx}: Collecting {posts_per_product} quality posts "
-            f"for '{comp_name}'..."
-        )
-        comp_posts: list[dict] = []
-        seen_comp: set[str]    = set()
-        attempt = 0
-
-        while len(comp_posts) < posts_per_product:
-            attempt += 1
-            batch = _fetch_reddit_posts(
-                query=comp_name,
-                product_name=comp_name,
-                limit=posts_per_product * 4,
-                user_agent=user_agent,
-            )
-
-            for p in batch:
-                if p["text"] not in seen_comp:
-                    comp_posts.append(p)
-                    seen_comp.add(p["text"])
-
-            if len(comp_posts) >= posts_per_product:
-                break
-
-            if not batch:
-                print(
-                    f"[reddit_scraper] ⚠️  No more Reddit results for '{comp_name}'. "
-                    f"Proceeding with {len(comp_posts)} posts."
-                )
-                break
-
-            sleep_sec = random.uniform(_MIN_RETRY_SLEEP, _MAX_RETRY_SLEEP)
-            print(
-                f"[reddit_scraper] 🔄 Attempt {attempt}: {len(comp_posts)}/{posts_per_product} "
-                f"posts. Retrying in {sleep_sec:.1f}s..."
-            )
-            time.sleep(sleep_sec)
-
-        comp_posts = comp_posts[:posts_per_product]
-        print(
-            f"[reddit_scraper] ✅ Competitor '{comp_name}': "
-            f"{len(comp_posts)}/{posts_per_product} posts collected."
-        )
-        competitor_data[comp_name] = {"posts": comp_posts}
+        try:
+            comp_posts = _collect_posts(comp_name, posts_per_product, user_agent, progress, f"competitor '{comp_name}'")
+        except RedditUnavailableError as exc:
+            say(f"Skipping competitor '{comp_name}': {exc}")
+            continue
+        say(f"Competitor '{comp_name}': {len(comp_posts)}/{posts_per_product} posts collected.")
+        if comp_posts:  # a competitor with no posts would only add misleading empty rows
+            competitor_data[comp_name] = {"posts": comp_posts}
         if idx < len(competitors):
             _reddit_sleep(reddit_sleep, label=f"after '{comp_name}' fetch")
 
-    total_posts = len(target_posts) + sum(
-        len(v["posts"]) for v in competitor_data.values()
-    )
-    print(
-        f"[reddit_scraper] 🏁 Scraping complete. "
-        f"1 target + {len(competitor_data)} competitors. "
-        f"Total quality posts: {total_posts} "
-        f"(goal: {posts_per_product} each)."
-    )
-
+    total = len(target_posts) + sum(len(v["posts"]) for v in competitor_data.values())
+    say(f"Scraping complete: 1 target + {len(competitor_data)} competitors, {total} posts.")
     return {
-        "target":      {"name": product_name, "posts": target_posts},
+        "target": {"name": product_name, "posts": target_posts},
         "competitors": competitor_data,
     }

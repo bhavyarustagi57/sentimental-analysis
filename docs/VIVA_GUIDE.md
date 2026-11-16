@@ -99,3 +99,19 @@ Use these as short talking points, not scripts to recite word-for-word.
 **What are the main limitations?**  Classical models only; binary sentiment; 10,000-sample subsets; no hyperparameter tuning; TF-IDF lacks deep contextual semantics; timing depends on hardware.
 
 **What would you do next?**  Add cross-validation and careful hyperparameter tuning, evaluate contextual embeddings/transformers, use larger datasets, explore multilingual/aspect-based sentiment, and add explainability. These are future work and do not alter the frozen baseline.
+
+**What is the status of the transformer work in the repo?**  Future work (started): transformer extension, 3 of 24 runs complete, not part of the frozen baseline. It fine-tunes six modern transformer models on a free Colab GPU under `docs/PHASE4_BENCHMARK_EXECUTION.md`; only EuroBERT on IMDb (91.95% accuracy) finished validating. The code and its tests stay in the repo for continuation, but no transformer result is used anywhere in the dashboard or the frozen comparison.
+
+## Dashboard design
+
+**Why this visual style for the dashboard?**  Light mode is the default so results are legible on a projector in a viva room; dark mode is an optional toggle. The palette keeps a fixed colour per model across every chart (bars, heatmap, scatter, vote tally) so an examiner can track one model by eye without re-reading a legend each time.
+
+**Why does one colour (the accent) get used so sparingly?**  It is reserved for declared results only — a dataset's actual winning cell in the heatmap, a win pill on a table row — never for decoration. If a cell is highlighted, it means `best_by_dataset` from the backend actually names it the winner; nothing is marked "best" by visual choice.
+
+**What is the six-model vote and what does a split decision mean?**  "Let all 6 models vote" sends the same input text to every saved model for the chosen dataset and tallies how many call it positive vs. negative. A clear majority shows a winner with the count (e.g. "4 of 6 models say positive"); a 3–3 tie is shown explicitly as a "Split decision" rather than forced to a winner, because a tie is itself evidence that classical models disagree on genuinely ambiguous text.
+
+**Why does yellow mark only declared results?**  The accent colour is treated as a scarce signal, not a theme colour: it only appears where the backend's own `best_by_dataset` summary names a winner (heatmap ring, win pill, win row). Anything else that looks important — chart titles, active tabs — uses a separate ink/indigo palette so a viewer never mistakes styling for a result.
+
+**What do the heatmap and the speed-vs-accuracy chart show?**  The heatmap is model × dataset test accuracy on the real 2,000-example held-out set per cell, with each dataset's winning cell ringed. The speed-vs-accuracy chart plots mean training/inference time against mean accuracy per model, so the accuracy-vs-cost trade-off (e.g. Random Forest's ~20.49s training time, KNN's ~515.52ms inference time) is visible at a glance rather than buried in a table.
+
+**How does the product report's language-model step relate to the academic study?**  The optional product report (Reddit posts or uploaded reviews) scores text with VADER, a rule-based lexicon, then asks a Groq-hosted LLM to write a short narrative summary of those VADER scores. The LLM never re-labels sentiment and is not one of the six compared classifiers; its output is an estimate/summary layer on top of VADER's numbers, kept clearly separate from the frozen 24-experiment comparison.

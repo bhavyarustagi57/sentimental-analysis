@@ -1,0 +1,71 @@
+{
+  "detector": {
+    "ignoreRules": [],
+    "ignoreFiles": [],
+    "ignoreValues": [
+      {
+        "rule": "skipped-heading",
+        "value": "*",
+        "files": [
+          ".impeccable/mocks/decision/counting-night.html"
+        ],
+        "createdAt": "2026-11-16T08:11:27.226Z",
+        "reason": "agent: throwaway decision-round sketch, not shipped; the chosen direction was rebuilt in src/"
+      },
+      {
+        "rule": "skipped-heading",
+        "value": "*",
+        "files": [
+          ".impeccable/mocks/decision/transit.html"
+        ],
+        "createdAt": "2026-11-16T08:11:27.578Z",
+        "reason": "agent: throwaway decision-round sketch, not shipped; the chosen direction was rebuilt in src/"
+      },
+      {
+        "rule": "cramped-padding",
+        "value": "*",
+        "files": [
+          ".impeccable/mocks/decision/transit.html"
+        ],
+        "createdAt": "2026-11-16T08:11:27.969Z",
+        "reason": "agent: throwaway decision-round sketch, not shipped; the chosen direction was rebuilt in src/"
+      },
+      {
+        "rule": "design-system-font",
+        "value": "*",
+        "files": [
+          ".impeccable/mocks/decision/counting-night.html"
+        ],
+        "createdAt": "2026-11-16T08:39:36.851Z",
+        "reason": "agent: throwaway decision-round sketch (the spent hand), not shipped; each sketch shows a different candidate direction's font by design"
+      },
+      {
+        "rule": "design-system-font",
+        "value": "*",
+        "files": [
+          ".impeccable/mocks/decision/figure-lab.html"
+        ],
+        "createdAt": "2026-11-16T08:39:37.092Z",
+        "reason": "agent: throwaway decision-round sketch (the spent hand), not shipped; each sketch shows a different candidate direction's font by design"
+      },
+      {
+        "rule": "design-system-font",
+        "value": "*",
+        "files": [
+          ".impeccable/mocks/decision/transit.html"
+        ],
+        "createdAt": "2026-11-16T08:39:37.329Z",
+        "reason": "agent: throwaway decision-round sketch (the spent hand), not shipped; each sketch shows a different candidate direction's font by design"
+      },
+      {
+        "rule": "design-system-font",
+        "value": "*",
+        "files": [
+          ".impeccable/mocks/decision/canon.html"
+        ],
+        "createdAt": "2026-11-16T08:39:37.556Z",
+        "reason": "agent: throwaway decision-round sketch (the spent hand), not shipped; each sketch shows a different candidate direction's font by design"
+      }
+    ]
+  }
+}

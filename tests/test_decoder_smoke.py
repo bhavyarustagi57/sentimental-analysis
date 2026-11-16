@@ -5,8 +5,11 @@ from types import SimpleNamespace
 from typing import Any
 
 import pytest
-import torch
-from safetensors.torch import save_file
+
+# Optional heavy deps (requirements-transformers.txt): skip this module if absent.
+torch = pytest.importorskip("torch")
+pytest.importorskip("safetensors")
+from safetensors.torch import save_file  # noqa: E402
 
 from ml.decoder_smoke import (
     SUPPORTED_DECODER_KEYS,

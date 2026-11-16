@@ -174,6 +174,7 @@ def test_promotion_rejects_bad_prediction_count_and_hash(tmp_path: Path) -> None
 
 
 def test_local_final_execution_is_blocked_before_model_or_test_access(tmp_path: Path) -> None:
+    pytest.importorskip("torch")  # optional dep (requirements-transformers.txt)
     initialize_queue(tmp_path)
     with pytest.raises(RuntimeError, match="requires a free CUDA GPU"):
         execute_final_run("imdb", "eurobert_210m", results_root=tmp_path)

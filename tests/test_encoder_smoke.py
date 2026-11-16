@@ -6,7 +6,9 @@ from typing import Any
 
 import numpy as np
 import pytest
-import torch
+
+# Optional heavy dep (requirements-transformers.txt): skip this module if absent.
+torch = pytest.importorskip("torch")
 
 from ml.config import MODELS_DIR
 from ml.encoder_smoke import (

@@ -1,5 +1,7 @@
 # Phase 4 final modern benchmark
 
+> **Status: Future work (started): transformer extension, 3 of 24 runs complete, not part of the frozen baseline.** The code and tests below are kept for continuation but are not run as part of the submission; the 24-experiment classical comparison is the frozen baseline.
+
 ## Scope and integrity rules
 
 This package executes the locked 24-run matrix: six pinned modern models across IMDb, Sentiment140, Amazon Polarity, and Yelp Polarity. It never treats a smoke run as a final result and never uses the final test split for checkpoint selection. A run becomes canonical only after its staged artifact, clean checkpoint reload, 2,000 predictions, hashes, metrics, and metadata all validate.

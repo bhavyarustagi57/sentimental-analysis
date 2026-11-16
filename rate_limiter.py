@@ -18,8 +18,8 @@ How it works:
     - Thread-safe via threading.Lock.
 
 Limits (Groq free tier as of April 2026):
-    Light model  (llama3-8b-8192):            30 RPM / 14,400 RPD
-    Heavy model  (llama-3.3-70b-versatile):   30 RPM /  1,000 RPD
+    Light model  (openai/gpt-oss-20b):            30 RPM
+    Heavy model  (openai/gpt-oss-120b):           30 RPM
 """
 
 import time
@@ -114,3 +114,12 @@ groq_rate_limiter = SlidingWindowRateLimiter(
     window_seconds=60.0,
     min_gap_seconds=2.5,  # 2.5s floor between calls (~24 RPM sustained max)
 )
+
+
+def model_extras(model: str) -> dict:
+    """Extra chat-completion arguments for reasoning models (gpt-oss).
+
+    Reasoning tokens count against max_tokens, so keep the reasoning short; otherwise the
+    JSON answer can be cut off. Other models need no extra arguments.
+    """
+    return {"reasoning_effort": "low"} if "gpt-oss" in model else {}
